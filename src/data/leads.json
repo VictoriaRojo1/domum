@@ -1,0 +1,47 @@
+{
+  "leads": [],
+  "stages": [
+    {
+      "id": "nuevo",
+      "name": "Nuevo",
+      "color": "#6366f1",
+      "order": 1
+    },
+    {
+      "id": "contacto_inicial",
+      "name": "Contacto Inicial",
+      "color": "#8b5cf6",
+      "order": 2
+    },
+    {
+      "id": "calificado",
+      "name": "Calificado",
+      "color": "#06b6d4",
+      "order": 3
+    },
+    {
+      "id": "visita_programada",
+      "name": "Visita Programada",
+      "color": "#f59e0b",
+      "order": 4
+    },
+    {
+      "id": "negociacion",
+      "name": "Negociación",
+      "color": "#ec4899",
+      "order": 5
+    },
+    {
+      "id": "cerrado_ganado",
+      "name": "Cerrado Ganado",
+      "color": "#10b981",
+      "order": 6
+    },
+    {
+      "id": "perdido",
+      "name": "Perdido",
+      "color": "#ef4444",
+      "order": 7
+    }
+  ]
+}

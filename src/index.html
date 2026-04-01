@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOMUM - Sistema Inmobiliario</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- HTML to PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-container">
+      <div class="login-logo">
+        <div class="login-logo-icon">
+          <i data-lucide="building-2"></i>
+        </div>
+        <h1 class="login-title">DOMUM</h1>
+        <p class="login-subtitle">Sistema de Gestión Inmobiliaria</p>
+      </div>
+
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <div class="input-icon-wrapper">
+            <i data-lucide="mail" class="input-icon"></i>
+            <input type="email" class="form-input" placeholder="tu@email.com" value="admin@domum.com.ar">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <div class="input-icon-wrapper">
+            <i data-lucide="lock" class="input-icon"></i>
+            <input type="password" class="form-input" placeholder="••••••••" value="Admin123!">
+          </div>
+        </div>
+
+        <div class="login-options">
+          <label class="checkbox-label">
+            <input type="checkbox" checked>
+            <span class="checkbox-custom"></span>
+            Recordarme
+          </label>
+          <a href="#" class="login-link">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--lg btn--full">
+          <i data-lucide="log-in"></i>
+          Ingresar
+        </button>
+      </form>
+
+      <p class="login-footer">
+        © 2026 DOMUM Inmobiliaria. Todos los derechos reservados.
+      </p>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app" class="app hidden">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar__header">
+        <div class="sidebar__logo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-logo-icon"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+          <span>DOMUM</span>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav">
+        <a href="#dashboard" class="nav-item active" data-page="dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#propiedades" class="nav-item" data-page="propiedades">
+          <i data-lucide="home"></i>
+          <span>Propiedades</span>
+        </a>
+        <a href="#crm" class="nav-item" data-page="crm">
+          <i data-lucide="users"></i>
+          <span>CRM</span>
+        </a>
+        <a href="#contactos" class="nav-item" data-page="contactos">
+          <i data-lucide="contact"></i>
+          <span>Contactos</span>
+        </a>
+        <a href="#calendario" class="nav-item" data-page="calendario">
+          <i data-lucide="calendar"></i>
+          <span>Calendario</span>
+        </a>
+        <a href="#administraciones" class="nav-item" data-page="administraciones">
+          <i data-lucide="building"></i>
+          <span>Administraciones</span>
+        </a>
+        <a href="#documentos" class="nav-item" data-page="documentos">
+          <i data-lucide="file-text"></i>
+          <span>Documentos IA</span>
+        </a>
+        <a href="#caja" class="nav-item" data-page="caja">
+          <i data-lucide="wallet"></i>
+          <span>Caja</span>
+        </a>
+        <a href="#informes" class="nav-item" data-page="informes">
+          <i data-lucide="bar-chart-3"></i>
+          <span>Informes</span>
+        </a>
+        <a href="#usuarios" class="nav-item" data-page="usuarios">
+          <i data-lucide="user-cog"></i>
+          <span>Usuarios</span>
+        </a>
+        <a href="#configuracion" class="nav-item" data-page="configuracion">
+          <i data-lucide="settings"></i>
+          <span>Configuración</span>
+        </a>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="user-menu">
+          <div class="user-avatar">MD</div>
+          <div class="user-info">
+            <span class="user-name">Martín Domum</span>
+            <span class="user-role">Administrador</span>
+          </div>
+          <button class="btn btn--ghost btn--icon" id="logout-btn">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header__left">
+          <h1 class="header__title" id="page-title">Dashboard</h1>
+        </div>
+        <div class="header__right">
+          <div class="search-box">
+            <i data-lucide="search"></i>
+            <input type="text" placeholder="Buscar..." class="search-input">
+          </div>
+          <div class="notifications-wrapper">
+            <button class="btn btn--ghost btn--icon" id="notifications-btn">
+              <i data-lucide="bell"></i>
+              <span class="notification-badge" id="notification-count" style="display: none;">0</span>
+            </button>
+            <div class="notifications-dropdown" id="notifications-dropdown">
+              <div class="notifications-dropdown__header">
+                <h3>Seguimientos Pendientes</h3>
+              </div>
+              <div class="notifications-dropdown__list" id="notifications-list">
+                <!-- Notifications will be loaded here -->
+              </div>
+              <div class="notifications-dropdown__empty" id="notifications-empty" style="display: none;">
+                <i data-lucide="check-circle"></i>
+                <p>No hay seguimientos pendientes</p>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn--primary" id="new-btn">
+            <i data-lucide="plus"></i>
+            <span>Nuevo</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Content Container -->
+      <div class="content" id="content">
+        <!-- Pages will be loaded here -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Modal Overlay -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div id="modal-container" class="modal">
+      <!-- Modal content will be injected here -->
+    </div>
+  </div>
+
+  <!-- Panel Overlay -->
+  <div id="panel-overlay" class="panel-overlay"></div>
+
+  <!-- Detail Panel -->
+  <div id="detail-panel" class="detail-panel">
+    <!-- Panel content will be injected here -->
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/pages.js"></script>
+  <script src="js/modals.js"></script>
+  <script src="js/panels.js"></script>
+  <script src="js/pdf-generator.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

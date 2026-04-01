@@ -1,0 +1,146 @@
+{
+  "temporaryBookings": [
+    {
+      "id": "tb-001",
+      "checkInDate": "2026-03-20",
+      "checkOutDate": "2026-03-25",
+      "numberOfNights": 5,
+      "pricePerNight": 150,
+      "totalPrice": 750,
+      "currency": "USD",
+      "guestName": "Carlos Rodriguez",
+      "guestEmail": "carlos.rodriguez@email.com",
+      "guestPhone": "+54 11 5555-1234",
+      "numberOfGuests": 2,
+      "status": "confirmada",
+      "confirmationCode": "DOM-20260320-A1B2",
+      "source": "airbnb",
+      "notes": "Check-in flexible a partir de las 15:00",
+      "property": {
+        "id": "prop-temp-001",
+        "title": "Depto en Palermo con Vista al Parque",
+        "address": "Thames 1234, Palermo"
+      },
+      "propietario": {
+        "id": "contact-prop-001",
+        "name": "Maria Gonzalez",
+        "phone": "+54 11 4444-5555"
+      }
+    },
+    {
+      "id": "tb-002",
+      "checkInDate": "2026-03-18",
+      "checkOutDate": "2026-03-22",
+      "numberOfNights": 4,
+      "pricePerNight": 200,
+      "totalPrice": 800,
+      "currency": "USD",
+      "guestName": "Ana Martinez",
+      "guestEmail": "ana.martinez@email.com",
+      "guestPhone": "+54 11 6666-7777",
+      "numberOfGuests": 3,
+      "status": "confirmada",
+      "confirmationCode": "DOM-20260318-C3D4",
+      "source": "booking",
+      "notes": "Familia con un menor",
+      "property": {
+        "id": "prop-temp-002",
+        "title": "Casa en San Isidro con Jardin",
+        "address": "Av. Libertador 5678, San Isidro"
+      },
+      "propietario": {
+        "id": "contact-prop-002",
+        "name": "Roberto Fernandez",
+        "phone": "+54 11 3333-4444"
+      }
+    },
+    {
+      "id": "tb-003",
+      "checkInDate": "2026-03-25",
+      "checkOutDate": "2026-03-28",
+      "numberOfNights": 3,
+      "pricePerNight": 180,
+      "totalPrice": 540,
+      "currency": "USD",
+      "guestName": "Pedro Sanchez",
+      "guestEmail": "pedro.sanchez@email.com",
+      "guestPhone": "+54 11 8888-9999",
+      "numberOfGuests": 2,
+      "status": "pendiente",
+      "confirmationCode": "DOM-20260325-E5F6",
+      "source": "directo",
+      "notes": "Pendiente de confirmacion de pago",
+      "property": {
+        "id": "prop-temp-001",
+        "title": "Depto en Palermo con Vista al Parque",
+        "address": "Thames 1234, Palermo"
+      },
+      "propietario": {
+        "id": "contact-prop-001",
+        "name": "Maria Gonzalez",
+        "phone": "+54 11 4444-5555"
+      }
+    },
+    {
+      "id": "tb-004",
+      "checkInDate": "2026-04-01",
+      "checkOutDate": "2026-04-07",
+      "numberOfNights": 6,
+      "pricePerNight": 220,
+      "totalPrice": 1320,
+      "currency": "USD",
+      "guestName": "Laura Gomez",
+      "guestEmail": "laura.gomez@email.com",
+      "guestPhone": "+54 11 1111-2222",
+      "numberOfGuests": 4,
+      "status": "confirmada",
+      "confirmationCode": "DOM-20260401-G7H8",
+      "source": "airbnb",
+      "notes": "Semana Santa - grupo familiar",
+      "property": {
+        "id": "prop-temp-002",
+        "title": "Casa en San Isidro con Jardin",
+        "address": "Av. Libertador 5678, San Isidro"
+      },
+      "propietario": {
+        "id": "contact-prop-002",
+        "name": "Roberto Fernandez",
+        "phone": "+54 11 3333-4444"
+      }
+    },
+    {
+      "id": "tb-005",
+      "checkInDate": "2026-03-10",
+      "checkOutDate": "2026-03-15",
+      "numberOfNights": 5,
+      "pricePerNight": 150,
+      "totalPrice": 750,
+      "currency": "USD",
+      "guestName": "Miguel Torres",
+      "guestEmail": "miguel.torres@email.com",
+      "guestPhone": "+54 11 2222-3333",
+      "numberOfGuests": 1,
+      "status": "completada",
+      "confirmationCode": "DOM-20260310-I9J0",
+      "source": "booking",
+      "notes": "Viajero de negocios",
+      "property": {
+        "id": "prop-temp-001",
+        "title": "Depto en Palermo con Vista al Parque",
+        "address": "Thames 1234, Palermo"
+      },
+      "propietario": {
+        "id": "contact-prop-001",
+        "name": "Maria Gonzalez",
+        "phone": "+54 11 4444-5555"
+      }
+    }
+  ],
+  "bookingSources": [
+    { "id": "airbnb", "name": "Airbnb", "color": "#FF5A5F" },
+    { "id": "booking", "name": "Booking.com", "color": "#003580" },
+    { "id": "vrbo", "name": "VRBO", "color": "#3B5998" },
+    { "id": "directo", "name": "Directo", "color": "#10B981" },
+    { "id": "otro", "name": "Otro", "color": "#6B7280" }
+  ]
+}

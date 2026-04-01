@@ -1,0 +1,148 @@
+{
+  "documentTypes": [
+    {
+      "id": "contrato_alquiler",
+      "name": "Contrato de Alquiler",
+      "category": "contratos",
+      "icon": "home",
+      "description": "Contrato de locación de inmueble",
+      "fields": [
+        { "id": "property", "label": "Propiedad", "type": "select", "source": "properties", "required": true },
+        { "id": "propietario", "label": "Propietario (Locador)", "type": "select", "source": "contacts", "filter": "propietario", "required": true },
+        { "id": "inquilino", "label": "Inquilino (Locatario)", "type": "select", "source": "contacts", "filter": "inquilino", "required": true },
+        { "id": "startDate", "label": "Fecha de Inicio", "type": "date", "required": true },
+        { "id": "endDate", "label": "Fecha de Finalización", "type": "date", "required": true },
+        { "id": "monthlyRent", "label": "Alquiler Mensual", "type": "currency", "required": true },
+        { "id": "currency", "label": "Moneda", "type": "select", "options": ["ARS", "USD"], "required": true },
+        { "id": "paymentDay", "label": "Día de Pago", "type": "number", "min": 1, "max": 31, "default": 10, "required": true },
+        { "id": "deposit", "label": "Depósito de Garantía", "type": "currency", "required": true },
+        { "id": "adjustmentFrequency", "label": "Frecuencia de Ajuste", "type": "select", "options": ["Trimestral", "Cuatrimestral", "Semestral", "Anual"], "required": true },
+        { "id": "adjustmentIndex", "label": "Índice de Ajuste", "type": "select", "options": ["ICL (Índice Contratos Locación)", "IPC", "Acuerdo de Partes"], "required": true },
+        { "id": "guarantorName", "label": "Nombre del Garante", "type": "text", "required": false },
+        { "id": "guarantorDNI", "label": "DNI del Garante", "type": "text", "required": false },
+        { "id": "guarantorAddress", "label": "Domicilio del Garante", "type": "text", "required": false },
+        { "id": "destino", "label": "Destino del Inmueble", "type": "select", "options": ["Vivienda Familiar", "Comercial", "Profesional"], "default": "Vivienda Familiar", "required": true },
+        { "id": "includedServices", "label": "Servicios Incluidos", "type": "multiselect", "options": ["Expensas Ordinarias", "Agua", "ABL", "Ninguno"], "required": false },
+        { "id": "specialClauses", "label": "Cláusulas Especiales", "type": "textarea", "required": false }
+      ],
+      "template": "CONTRATO DE LOCACIÓN\n\nEn la Ciudad de {{city}}, a los {{currentDate}}, entre {{propietario.name}}, DNI {{propietario.dni}}, con domicilio en {{propietario.address}}, en adelante denominado \"EL LOCADOR\", y {{inquilino.name}}, DNI {{inquilino.dni}}, con domicilio en {{inquilino.address}}, en adelante denominado \"EL LOCATARIO\", convienen en celebrar el presente contrato de locación, sujeto a las siguientes cláusulas:\n\nPRIMERA - OBJETO: El LOCADOR da en locación al LOCATARIO, quien acepta, el inmueble ubicado en {{property.address}}, {{property.neighborhood}}, {{property.city}}, con destino exclusivo a {{destino}}.\n\nSEGUNDA - PLAZO: El presente contrato tendrá una duración de {{duration}} meses, comenzando a regir el día {{startDate}} y finalizando el día {{endDate}}, fecha en que el LOCATARIO deberá restituir el inmueble libre de ocupantes y en las mismas condiciones en que lo recibe.\n\nTERCERA - PRECIO: El precio de la locación se establece en {{currency}} {{monthlyRent}} ({{monthlyRentText}}) mensuales, que el LOCATARIO se obliga a pagar por adelantado del 1 al {{paymentDay}} de cada mes.\n\nCUARTA - AJUSTES: El canon locativo se ajustará {{adjustmentFrequency}} según el {{adjustmentIndex}}, aplicándose el primer ajuste a partir del mes {{firstAdjustmentMonth}}.\n\nQUINTA - DEPÓSITO: El LOCATARIO entrega en este acto la suma de {{currency}} {{deposit}} ({{depositText}}) en concepto de depósito de garantía, que será devuelto al finalizar el contrato, previa verificación del estado del inmueble.\n\nSEXTA - SERVICIOS: {{servicesClause}}\n\nSÉPTIMA - GARANTÍA: {{guaranteeClause}}\n\nOCTAVA - OBLIGACIONES DEL LOCATARIO:\na) Pagar puntualmente el alquiler y cargas que le correspondan.\nb) Conservar el inmueble en buen estado.\nc) No realizar modificaciones sin autorización escrita del LOCADOR.\nd) No subalquilar ni ceder el contrato.\ne) Permitir la inspección del inmueble con previo aviso.\n\nNOVENA - OBLIGACIONES DEL LOCADOR:\na) Entregar el inmueble en condiciones de habitabilidad.\nb) Mantener el inmueble en buen estado de conservación.\nc) Pagar los impuestos y tasas que graven la propiedad.\n\nDÉCIMA - RESCISIÓN ANTICIPADA: El LOCATARIO podrá rescindir el contrato abonando una indemnización equivalente a un mes y medio de alquiler si la rescisión se produce durante el primer año, o un mes de alquiler si se produce después del primer año.\n\n{{specialClauses}}\n\nEn prueba de conformidad, se firman dos ejemplares de un mismo tenor y a un solo efecto.\n\n\n_______________________                    _______________________\n       LOCADOR                                    LOCATARIO\n   {{propietario.name}}                        {{inquilino.name}}\n      DNI: {{propietario.dni}}                    DNI: {{inquilino.dni}}\n\n\n_______________________\n       GARANTE\n   {{guarantorName}}\n      DNI: {{guarantorDNI}}"
+    },
+    {
+      "id": "boleto_compraventa",
+      "name": "Boleto de Compraventa",
+      "category": "boletos",
+      "icon": "file-signature",
+      "description": "Boleto de compraventa de inmueble",
+      "fields": [
+        { "id": "property", "label": "Propiedad", "type": "select", "source": "properties", "required": true },
+        { "id": "vendedor", "label": "Vendedor", "type": "select", "source": "contacts", "filter": "propietario", "required": true },
+        { "id": "comprador", "label": "Comprador", "type": "select", "source": "contacts", "required": true },
+        { "id": "precioTotal", "label": "Precio Total", "type": "currency", "required": true },
+        { "id": "currency", "label": "Moneda", "type": "select", "options": ["USD", "ARS"], "default": "USD", "required": true },
+        { "id": "senaAmount", "label": "Monto de la Seña", "type": "currency", "required": true },
+        { "id": "senaDate", "label": "Fecha de Seña", "type": "date", "required": true },
+        { "id": "saldoAmount", "label": "Saldo a Pagar", "type": "currency", "required": true },
+        { "id": "escrituraDate", "label": "Fecha de Escrituración", "type": "date", "required": true },
+        { "id": "escribano", "label": "Escribano Interviniente", "type": "text", "required": true },
+        { "id": "registroEscribano", "label": "Registro del Escribano", "type": "text", "required": true },
+        { "id": "formaPago", "label": "Forma de Pago del Saldo", "type": "select", "options": ["Efectivo", "Transferencia Bancaria", "Cheque Certificado", "Hipoteca"], "required": true },
+        { "id": "posesionDate", "label": "Fecha de Posesión", "type": "date", "required": true },
+        { "id": "estadoOcupacion", "label": "Estado de Ocupación", "type": "select", "options": ["Libre", "Ocupado por el Vendedor", "Alquilado"], "required": true },
+        { "id": "incluyeMuebles", "label": "Incluye Muebles/Accesorios", "type": "checkbox", "required": false },
+        { "id": "detallesMuebles", "label": "Detalle de Muebles Incluidos", "type": "textarea", "required": false },
+        { "id": "comisionInmobiliaria", "label": "Comisión Inmobiliaria (%)", "type": "number", "default": 3, "required": true },
+        { "id": "clausulasEspeciales", "label": "Cláusulas Especiales", "type": "textarea", "required": false }
+      ],
+      "template": "BOLETO DE COMPRAVENTA\n\nEn la Ciudad de {{city}}, a los {{currentDate}}, entre {{vendedor.name}}, DNI {{vendedor.dni}}, con domicilio en {{vendedor.address}}, en adelante denominado \"EL VENDEDOR\", y {{comprador.name}}, DNI {{comprador.dni}}, con domicilio en {{comprador.address}}, en adelante denominado \"EL COMPRADOR\", convienen en celebrar el presente boleto de compraventa, sujeto a las siguientes cláusulas:\n\nPRIMERA - OBJETO: El VENDEDOR vende al COMPRADOR, quien acepta, el inmueble ubicado en {{property.address}}, {{property.neighborhood}}, {{property.city}}, inscripto en el Registro de la Propiedad bajo la Matrícula {{property.matricula}}, Partida Inmobiliaria N° {{property.partida}}.\n\nSEGUNDA - DESCRIPCIÓN: El inmueble objeto de la presente operación cuenta con las siguientes características: {{property.description}}. Superficie: {{property.area}} m².\n\nTERCERA - PRECIO: El precio total de la operación se fija en {{currency}} {{precioTotal}} ({{precioTotalText}}), pagaderos de la siguiente forma:\n\na) En este acto, en concepto de seña y principio de ejecución: {{currency}} {{senaAmount}} ({{senaAmountText}}).\nb) El saldo de {{currency}} {{saldoAmount}} ({{saldoAmountText}}) será abonado {{formaPago}} al momento de la escrituración.\n\nCUARTA - ESCRITURACIÓN: Las partes se comprometen a firmar la escritura traslativa de dominio dentro de los {{diasEscritura}} días de la fecha, y en todo caso no más allá del {{escrituraDate}}, ante el Escribano {{escribano}}, Registro N° {{registroEscribano}}.\n\nQUINTA - POSESIÓN: El VENDEDOR hará entrega de la posesión del inmueble el día {{posesionDate}}, libre de ocupantes y en las condiciones pactadas. Estado actual: {{estadoOcupacion}}.\n\nSEXTA - ESTADO DEL INMUEBLE: El COMPRADOR declara conocer el estado actual del inmueble, que acepta en el estado en que se encuentra.\n\n{{mueblesClauses}}\n\nSÉPTIMA - GRAVÁMENES: El VENDEDOR declara que el inmueble se encuentra libre de todo gravamen, hipoteca, embargo, inhibición u otra restricción al dominio. Se compromete a entregar libre de deudas por impuestos, tasas, expensas y servicios hasta la fecha de posesión.\n\nOCTAVA - GASTOS: Los gastos de escrituración serán abonados según la costumbre del lugar, correspondiendo al COMPRADOR los gastos de su exclusivo interés.\n\nNOVENA - COMISIÓN: La comisión inmobiliaria del {{comisionInmobiliaria}}% será abonada por las partes según lo convenido.\n\nDÉCIMA - INCUMPLIMIENTO: En caso de incumplimiento por parte del COMPRADOR, perderá las sumas entregadas en concepto de seña. En caso de incumplimiento por parte del VENDEDOR, deberá restituir el doble de lo recibido.\n\n{{clausulasEspeciales}}\n\nEn prueba de conformidad, se firman dos ejemplares de un mismo tenor y a un solo efecto.\n\n\n_______________________                    _______________________\n       VENDEDOR                                   COMPRADOR\n   {{vendedor.name}}                           {{comprador.name}}\n      DNI: {{vendedor.dni}}                       DNI: {{comprador.dni}}"
+    },
+    {
+      "id": "contrato_reserva",
+      "name": "Contrato de Reserva",
+      "category": "contratos",
+      "icon": "bookmark",
+      "description": "Reserva de inmueble para compra o alquiler",
+      "fields": [
+        { "id": "property", "label": "Propiedad", "type": "select", "source": "properties", "required": true },
+        { "id": "tipoOperacion", "label": "Tipo de Operación", "type": "select", "options": ["Compra", "Alquiler"], "required": true },
+        { "id": "interesado", "label": "Interesado", "type": "select", "source": "contacts", "required": true },
+        { "id": "propietario", "label": "Propietario", "type": "select", "source": "contacts", "filter": "propietario", "required": true },
+        { "id": "montoReserva", "label": "Monto de Reserva", "type": "currency", "required": true },
+        { "id": "currency", "label": "Moneda", "type": "select", "options": ["USD", "ARS"], "required": true },
+        { "id": "vigencia", "label": "Vigencia de la Reserva (días)", "type": "number", "default": 7, "required": true },
+        { "id": "precioOperacion", "label": "Precio de la Operación", "type": "currency", "required": true },
+        { "id": "condiciones", "label": "Condiciones de la Reserva", "type": "textarea", "required": false },
+        { "id": "formaPago", "label": "Forma de Pago", "type": "select", "options": ["Efectivo", "Transferencia", "Cheque"], "required": true }
+      ],
+      "template": "CONTRATO DE RESERVA\n\nEn la Ciudad de {{city}}, a los {{currentDate}}, entre DOMUM INMOBILIARIA, representada en este acto por su apoderado, en adelante \"LA INMOBILIARIA\", y {{interesado.name}}, DNI {{interesado.dni}}, con domicilio en {{interesado.address}}, en adelante \"EL INTERESADO\", se celebra el presente contrato de reserva.\n\nPRIMERA - OBJETO: El INTERESADO reserva el inmueble ubicado en {{property.address}}, {{property.neighborhood}}, {{property.city}}, propiedad de {{propietario.name}}, para su {{tipoOperacion}}.\n\nSEGUNDA - PRECIO: El precio de la operación se ha convenido en {{currency}} {{precioOperacion}} ({{precioOperacionText}}).\n\nTERCERA - RESERVA: El INTERESADO entrega en este acto la suma de {{currency}} {{montoReserva}} ({{montoReservaText}}) en concepto de reserva, mediante {{formaPago}}.\n\nCUARTA - VIGENCIA: La presente reserva tendrá una vigencia de {{vigencia}} días corridos a partir de la fecha, venciendo el día {{fechaVencimiento}}.\n\nQUINTA - ACEPTACIÓN: Dentro del plazo establecido, el PROPIETARIO deberá aceptar o rechazar la oferta. En caso de aceptación, se procederá a la firma del contrato correspondiente, imputándose el monto de la reserva a cuenta del precio.\n\nSEXTA - RECHAZO O VENCIMIENTO: En caso de que el PROPIETARIO rechace la oferta, o transcurra el plazo sin aceptación, el monto de la reserva será devuelto íntegramente al INTERESADO dentro de las 48 horas hábiles.\n\nSÉPTIMA - DESISTIMIENTO: Si el INTERESADO desiste de la operación dentro del plazo de vigencia, perderá el monto entregado en concepto de reserva.\n\n{{condiciones}}\n\nEn prueba de conformidad, se firman dos ejemplares de un mismo tenor y a un solo efecto.\n\n\n_______________________                    _______________________\n     LA INMOBILIARIA                             EL INTERESADO\n                                               {{interesado.name}}\n                                                  DNI: {{interesado.dni}}"
+    },
+    {
+      "id": "cesion_derechos",
+      "name": "Cesión de Derechos",
+      "category": "contratos",
+      "icon": "arrow-right-left",
+      "description": "Cesión de derechos sobre inmueble o contrato",
+      "fields": [
+        { "id": "property", "label": "Propiedad", "type": "select", "source": "properties", "required": true },
+        { "id": "cedente", "label": "Cedente", "type": "select", "source": "contacts", "required": true },
+        { "id": "cesionario", "label": "Cesionario", "type": "select", "source": "contacts", "required": true },
+        { "id": "tipoDerechos", "label": "Tipo de Derechos", "type": "select", "options": ["Derechos de Compra", "Derechos de Locación", "Derechos Hereditarios"], "required": true },
+        { "id": "contratoOriginal", "label": "Contrato Original (fecha)", "type": "date", "required": true },
+        { "id": "montoCesion", "label": "Monto de la Cesión", "type": "currency", "required": true },
+        { "id": "currency", "label": "Moneda", "type": "select", "options": ["USD", "ARS"], "required": true },
+        { "id": "obligacionesPendientes", "label": "Obligaciones Pendientes", "type": "textarea", "required": false },
+        { "id": "autorizacionPropietario", "label": "Autorización del Propietario", "type": "checkbox", "required": true },
+        { "id": "condicionesEspeciales", "label": "Condiciones Especiales", "type": "textarea", "required": false }
+      ],
+      "template": "CONTRATO DE CESIÓN DE DERECHOS\n\nEn la Ciudad de {{city}}, a los {{currentDate}}, entre {{cedente.name}}, DNI {{cedente.dni}}, con domicilio en {{cedente.address}}, en adelante \"EL CEDENTE\", y {{cesionario.name}}, DNI {{cesionario.dni}}, con domicilio en {{cesionario.address}}, en adelante \"EL CESIONARIO\", convienen en celebrar el presente contrato de cesión de derechos.\n\nPRIMERA - ANTECEDENTES: El CEDENTE es titular de {{tipoDerechos}} respecto del inmueble ubicado en {{property.address}}, {{property.neighborhood}}, {{property.city}}, según consta en el contrato de fecha {{contratoOriginal}}.\n\nSEGUNDA - CESIÓN: Por el presente, el CEDENTE cede y transfiere al CESIONARIO todos los derechos y obligaciones que le corresponden en relación al inmueble mencionado.\n\nTERCERA - PRECIO: El precio de la presente cesión se fija en {{currency}} {{montoCesion}} ({{montoCesionText}}), que el CESIONARIO abona en este acto.\n\nCUARTA - OBLIGACIONES: El CESIONARIO asume todas las obligaciones pendientes del contrato original:\n{{obligacionesPendientes}}\n\nQUINTA - CONFORMIDAD DEL PROPIETARIO: {{autorizacionClause}}\n\nSEXTA - GARANTÍA: El CEDENTE garantiza que los derechos cedidos son legítimos y que no existen impedimentos para la presente cesión.\n\n{{condicionesEspeciales}}\n\nEn prueba de conformidad, se firman dos ejemplares de un mismo tenor y a un solo efecto.\n\n\n_______________________                    _______________________\n        CEDENTE                                   CESIONARIO\n   {{cedente.name}}                            {{cesionario.name}}\n      DNI: {{cedente.dni}}                        DNI: {{cesionario.dni}}"
+    },
+    {
+      "id": "carta_documento",
+      "name": "Carta Documento",
+      "category": "informes",
+      "icon": "mail",
+      "description": "Carta documento formal",
+      "fields": [
+        { "id": "destinatario", "label": "Destinatario", "type": "select", "source": "contacts", "required": true },
+        { "id": "remitente", "label": "Remitente", "type": "select", "source": "contacts", "required": true },
+        { "id": "asunto", "label": "Asunto", "type": "text", "required": true },
+        { "id": "motivo", "label": "Motivo", "type": "select", "options": ["Intimación de Pago", "Rescisión de Contrato", "Reclamo", "Notificación", "Otro"], "required": true },
+        { "id": "property", "label": "Propiedad Relacionada", "type": "select", "source": "properties", "required": false },
+        { "id": "montoAdeudado", "label": "Monto Adeudado (si aplica)", "type": "currency", "required": false },
+        { "id": "currency", "label": "Moneda", "type": "select", "options": ["ARS", "USD"], "required": false },
+        { "id": "plazoRespuesta", "label": "Plazo para Respuesta (días)", "type": "number", "default": 10, "required": true },
+        { "id": "contenido", "label": "Contenido de la Carta", "type": "textarea", "required": true },
+        { "id": "consecuencias", "label": "Consecuencias por Incumplimiento", "type": "textarea", "required": false }
+      ],
+      "template": "CARTA DOCUMENTO\n\n{{city}}, {{currentDate}}\n\nSEÑOR/A:\n{{destinatario.name}}\n{{destinatario.address}}\nPRESENTE\n\nREF: {{asunto}}\n\nDe mi consideración:\n\nPor medio de la presente, en mi carácter de {{remitente.role}}, me dirijo a Ud. a efectos de {{motivoTexto}}.\n\n{{contenido}}\n\n{{propertyReference}}\n\n{{montoReference}}\n\nPor lo expuesto, INTIMO a Ud. para que en el plazo perentorio de {{plazoRespuesta}} días corridos a partir de la recepción de la presente, proceda a {{accionRequerida}}.\n\n{{consecuencias}}\n\nQueda Ud. debidamente notificado/a.\n\nSin otro particular, saludo a Ud. atentamente.\n\n\n_______________________\n{{remitente.name}}\nDNI: {{remitente.dni}}\n{{remitente.address}}"
+    },
+    {
+      "id": "rescision_contrato",
+      "name": "Rescisión de Contrato",
+      "category": "contratos",
+      "icon": "file-x",
+      "description": "Documento de rescisión de contrato de alquiler",
+      "fields": [
+        { "id": "property", "label": "Propiedad", "type": "select", "source": "properties", "required": true },
+        { "id": "contratoOriginal", "label": "Fecha del Contrato Original", "type": "date", "required": true },
+        { "id": "propietario", "label": "Propietario", "type": "select", "source": "contacts", "filter": "propietario", "required": true },
+        { "id": "inquilino", "label": "Inquilino", "type": "select", "source": "contacts", "filter": "inquilino", "required": true },
+        { "id": "fechaRescision", "label": "Fecha Efectiva de Rescisión", "type": "date", "required": true },
+        { "id": "motivoRescision", "label": "Motivo de Rescisión", "type": "select", "options": ["Mutuo Acuerdo", "Solicitud del Locatario", "Incumplimiento del Locatario", "Incumplimiento del Locador", "Venta del Inmueble"], "required": true },
+        { "id": "penalidad", "label": "Penalidad (si aplica)", "type": "currency", "required": false },
+        { "id": "currency", "label": "Moneda", "type": "select", "options": ["ARS", "USD"], "required": false },
+        { "id": "devolucionDeposito", "label": "Devolución de Depósito", "type": "select", "options": ["Total", "Parcial", "Sin Devolución"], "required": true },
+        { "id": "montoDevolucion", "label": "Monto a Devolver", "type": "currency", "required": false },
+        { "id": "fechaEntrega", "label": "Fecha de Entrega del Inmueble", "type": "date", "required": true },
+        { "id": "estadoEntrega", "label": "Estado de Entrega", "type": "textarea", "required": false },
+        { "id": "deudasPendientes", "label": "Deudas Pendientes", "type": "textarea", "required": false },
+        { "id": "clausulasAdicionales", "label": "Cláusulas Adicionales", "type": "textarea", "required": false }
+      ],
+      "template": "CONVENIO DE RESCISIÓN DE CONTRATO DE LOCACIÓN\n\nEn la Ciudad de {{city}}, a los {{currentDate}}, entre {{propietario.name}}, DNI {{propietario.dni}}, con domicilio en {{propietario.address}}, en adelante \"EL LOCADOR\", y {{inquilino.name}}, DNI {{inquilino.dni}}, con domicilio en {{inquilino.address}}, en adelante \"EL LOCATARIO\", convienen en celebrar el presente convenio de rescisión.\n\nPRIMERA - ANTECEDENTES: Con fecha {{contratoOriginal}}, las partes celebraron un contrato de locación respecto del inmueble ubicado en {{property.address}}, {{property.neighborhood}}, {{property.city}}.\n\nSEGUNDA - RESCISIÓN: Por el presente, las partes de común acuerdo resuelven rescindir el contrato de locación mencionado, con efectos a partir del día {{fechaRescision}}.\n\nTERCERA - MOTIVO: La rescisión se produce por: {{motivoRescision}}.\n\nCUARTA - PENALIDAD: {{penalidadClause}}\n\nQUINTA - DEPÓSITO: {{depositoClause}}\n\nSEXTA - ENTREGA DEL INMUEBLE: El LOCATARIO se compromete a entregar el inmueble el día {{fechaEntrega}}, libre de ocupantes y en las siguientes condiciones:\n{{estadoEntrega}}\n\nSÉPTIMA - DEUDAS: {{deudasClause}}\n\nOCTAVA - LIBERACIÓN: Las partes se otorgan recíprocamente el más amplio finiquito, declarando que nada más tienen que reclamarse por ningún concepto derivado del contrato rescindido.\n\n{{clausulasAdicionales}}\n\nEn prueba de conformidad, se firman dos ejemplares de un mismo tenor y a un solo efecto.\n\n\n_______________________                    _______________________\n       LOCADOR                                    LOCATARIO\n   {{propietario.name}}                        {{inquilino.name}}\n      DNI: {{propietario.dni}}                    DNI: {{inquilino.dni}}"
+    }
+  ],
+  "categories": [
+    { "id": "contratos", "name": "Contratos", "icon": "file-text" },
+    { "id": "boletos", "name": "Boletos", "icon": "file-signature" },
+    { "id": "informes", "name": "Informes", "icon": "file-chart-line" }
+  ]
+}

@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Environment (IMPORTANT: never commit these)
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma migrations (keep schema, ignore migrations)
+prisma/migrations/
+
+# Test
+coverage/
+
+# Uploads (now using Supabase Storage)
+backend/uploads/
+
+# Vercel
+.vercel/
+
+# Claude Code (optional - remove if you want to version these)
+# .claude/

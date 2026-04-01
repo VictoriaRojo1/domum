@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:domuminmobiliaria.com.ar)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(npx serve:*)",
+      "Bash(npx live-server:*)",
+      "Bash(dir:*)",
+      "Bash(python -m http.server:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker compose:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run db:generate:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(ping:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(curl:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(taskkill:*)",
+      "Bash(pkill:*)",
+      "Bash(netstat:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npx prisma db pull:*)",
+      "Bash(node -e:*)",
+      "Bash(findstr:*)",
+      "Bash(cmd //c \"taskkill /PID 40568 /F\")",
+      "Bash(npm start)",
+      "Bash(npx kill-port:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW1lNHI0eDEwMDAwbzh3NWJpcXZxc2h2Iiwicm9sZSI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzQwMzQ5ODEsImV4cCI6MTc3NDAzODU4MX0.F0wJ_suyypcb_6GdmoRxBN0ixEoPHKhqMOB574Qhvug\":*)",
+      "Bash(__NEW_LINE_c77ca920760778fd__ echo \"=== GET /api/leads ===\")",
+      "Bash(__NEW_LINE_0beb60bb5025a159__ echo -e \"\\\\n\\\\n=== GET /api/leads/:id ===\")",
+      "Bash(__NEW_LINE_2e8b49e855a90a3a__ echo -e \"\\\\n\\\\n=== GET /api/leads/:id/activities ===\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW11eWZieHIwMDAwMTMydmh3amtrZGZoIiwicm9sZSI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzQwMzUxMTAsImV4cCI6MTc3NDAzODcxMH0.bQ9ChQHgtdgQqqMY9rzy34CUaqJy4uy4wiq5LqtY9J8\")",
+      "Bash(npx prisma db seed:*)",
+      "Bash(node prisma/seed.js:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
