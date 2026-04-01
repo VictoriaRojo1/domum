@@ -4,7 +4,10 @@
  */
 
 const API = {
-  BASE_URL: 'http://localhost:3001/api',
+  // Auto-detect: use relative URL in production, localhost in development
+  BASE_URL: window.location.hostname === 'localhost'
+    ? 'http://localhost:3001/api'
+    : '/api',
 
   // =============================================
   // TOKEN MANAGEMENT
