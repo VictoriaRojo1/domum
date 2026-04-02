@@ -1043,20 +1043,9 @@ const App = {
       }
     }
 
-    // Contact row clicks (outside action buttons)
+    // Contact row click opens detail panel
     Utils.delegate(document.getElementById('content'), 'click', '.contact-row', (e, target) => {
-      if (!e.target.closest('.table-actions')) {
-        const contactId = target.dataset.id;
-        if (contactId) {
-          Panels.contact(contactId);
-        }
-      }
-    });
-
-    // Ver button click
-    Utils.delegate(document.getElementById('content'), 'click', '.btn-contact-view', (e, target) => {
-      e.stopPropagation();
-      const contactId = target.dataset.contactId;
+      const contactId = target.dataset.id;
       if (contactId) {
         Panels.contact(contactId);
       }

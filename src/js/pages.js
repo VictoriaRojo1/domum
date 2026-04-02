@@ -324,8 +324,8 @@ const Pages = {
               <tr>
                 <th>Contacto</th>
                 <th>Tipo</th>
+                <th>Referido</th>
                 <th>Teléfono</th>
-                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="contacts-tbody">

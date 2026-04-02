@@ -227,30 +227,20 @@ const Components = {
     const initials = Utils.getInitials(contact.name);
     const typeLabel = Utils.getContactTypeLabel(contact.type);
 
-    // Badge for referredBy
-    const referredByBadge = contact.referredBy
-      ? `<span class="badge badge--referred" title="Referido por"><i data-lucide="user-check" style="width:12px;height:12px;margin-right:4px;"></i>${contact.referredBy}</span>`
-      : '';
-
     return `
-      <tr class="contact-row" data-id="${contact.id}">
+      <tr class="contact-row" data-id="${contact.id}" style="cursor: pointer;">
         <td>
           <div class="contact-cell">
             <div class="contact-avatar">${initials}</div>
             <div class="contact-info">
               <span class="contact-name">${contact.name}</span>
               <span class="contact-email">${contact.email || ''}</span>
-              ${referredByBadge}
             </div>
           </div>
         </td>
         <td><span class="badge badge--secondary">${typeLabel}</span></td>
+        <td>${contact.referredBy || '-'}</td>
         <td>${contact.phone || contact.mobile || '-'}</td>
-        <td>
-          <div class="table-actions">
-            <button class="btn btn--ghost btn--sm btn-contact-view" data-contact-id="${contact.id}">Ver</button>
-          </div>
-        </td>
       </tr>
     `;
   },
