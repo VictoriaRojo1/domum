@@ -59,6 +59,9 @@ const Panels = {
           <button class="btn btn--ghost btn--icon" title="Editar" id="panel-edit">
             <i data-lucide="pencil"></i>
           </button>
+          <button class="btn btn--ghost btn--icon text-error" title="Eliminar" id="panel-delete">
+            <i data-lucide="trash-2"></i>
+          </button>
           <button class="btn btn--ghost btn--icon" title="Cerrar" id="panel-close">
             <i data-lucide="x"></i>
           </button>
@@ -211,6 +214,25 @@ const Panels = {
     document.getElementById('panel-edit')?.addEventListener('click', () => {
       this.close();
       Modals.editProperty(propertyId);
+    });
+
+    // Delete button - confirms and deletes property
+    document.getElementById('panel-delete')?.addEventListener('click', async () => {
+      const property = DataStore.getPropertyById(propertyId);
+      const propertyName = property?.title || property?.address || 'esta propiedad';
+
+      if (!confirm(`¿Estás seguro de que deseas eliminar "${propertyName}"?\n\nEsta acción no se puede deshacer.`)) {
+        return;
+      }
+
+      try {
+        await DataStore.deletePropertyViaAPI(propertyId);
+        this.close();
+        Toast.show('Propiedad eliminada correctamente', 'success');
+        App.navigate('propiedades');
+      } catch (error) {
+        Toast.show(error.message || 'Error al eliminar la propiedad', 'error');
+      }
     });
 
     // Schedule visit button - opens new event modal with property pre-selected
