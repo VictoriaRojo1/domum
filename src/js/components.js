@@ -247,21 +247,9 @@ const Components = {
         <td><span class="badge badge--secondary">${typeLabel}</span></td>
         <td>${contact.phone || contact.mobile || '-'}</td>
         <td>
-          ${contact.tags ? contact.tags.map(tag => `
-            <span class="badge badge--outline">${tag}</span>
-          `).join(' ') : '-'}
-        </td>
-        <td>
           <div class="table-actions">
-            <button class="btn btn--ghost btn--icon btn--sm" title="Llamar">
-              <i data-lucide="phone"></i>
-            </button>
-            <button class="btn btn--ghost btn--icon btn--sm" title="Email">
-              <i data-lucide="mail"></i>
-            </button>
-            <button class="btn btn--ghost btn--icon btn--sm" title="Ver detalle">
-              <i data-lucide="eye"></i>
-            </button>
+            <button class="btn btn--ghost btn--sm btn-contact-view" data-contact-id="${contact.id}">Ver</button>
+            <button class="btn btn--ghost btn--sm btn-contact-edit" data-contact-id="${contact.id}">Editar</button>
           </div>
         </td>
       </tr>

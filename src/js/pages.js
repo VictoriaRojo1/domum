@@ -325,7 +325,6 @@ const Pages = {
                 <th>Contacto</th>
                 <th>Tipo</th>
                 <th>Teléfono</th>
-                <th>Tags</th>
                 <th>Acciones</th>
               </tr>
             </thead>

@@ -1030,13 +1030,34 @@ const App = {
   },
 
   setupContactsPage() {
-    // Contact row clicks
+    // Contact row clicks (outside action buttons)
     Utils.delegate(document.getElementById('content'), 'click', '.contact-row', (e, target) => {
       if (!e.target.closest('.table-actions')) {
-        // Could open contact detail panel
-        Toast.show('info', 'Detalle de contacto', 'Panel en desarrollo');
+        const contactId = target.dataset.id;
+        if (contactId) {
+          Panels.contact(contactId);
+        }
       }
     });
+
+    // Ver button click
+    Utils.delegate(document.getElementById('content'), 'click', '.btn-contact-view', (e, target) => {
+      e.stopPropagation();
+      const contactId = target.dataset.contactId;
+      if (contactId) {
+        Panels.contact(contactId);
+      }
+    });
+
+    // Editar button click
+    Utils.delegate(document.getElementById('content'), 'click', '.btn-contact-edit', (e, target) => {
+      e.stopPropagation();
+      const contactId = target.dataset.contactId;
+      if (contactId) {
+        Modals.editContact(contactId);
+      }
+    });
+
     // Search is now handled by global header search
   },
 

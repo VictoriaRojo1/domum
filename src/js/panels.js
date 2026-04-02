@@ -1335,5 +1335,149 @@ const Panels = {
         this.lead(leadId);
       });
     });
+  },
+
+  // Contact Detail Panel
+  contact(contactId) {
+    const contact = DataStore.getContactById(contactId);
+    if (!contact) {
+      Toast.show('error', 'Contacto no encontrado');
+      return;
+    }
+
+    const typeLabel = Utils.getContactTypeLabel(contact.type);
+    const initials = Utils.getInitials(contact.name);
+
+    const content = `
+      <div class="panel__header">
+        <h2 class="panel__title">Detalle del Contacto</h2>
+        <div class="panel__actions">
+          <button class="btn btn--ghost btn--icon" title="Editar" id="panel-edit">
+            <i data-lucide="pencil"></i>
+          </button>
+          <button class="btn btn--ghost btn--icon" title="Cerrar" id="panel-close">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+      </div>
+      <div class="panel__body">
+        <!-- Contact Header -->
+        <div class="contact-panel-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="contact-avatar" style="width: 64px; height: 64px; font-size: 1.5rem;">${initials}</div>
+          <div>
+            <h3 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">${contact.name}</h3>
+            <span class="badge badge--secondary">${typeLabel}</span>
+          </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="panel__section">
+          <h3 class="panel__section-title">
+            <i data-lucide="contact"></i>
+            Información de Contacto
+          </h3>
+          <div class="info-row">
+            <span class="info-row__label">Email</span>
+            <span class="info-row__value">
+              ${contact.email ? `<a href="mailto:${contact.email}" style="color: var(--accent-cyan);">${contact.email}</a>` : '-'}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-row__label">Teléfono</span>
+            <span class="info-row__value">
+              ${contact.phone ? `<a href="tel:${contact.phone}" style="color: var(--text-primary);">${contact.phone}</a>` : '-'}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-row__label">Móvil</span>
+            <span class="info-row__value">
+              ${contact.mobile ? `<a href="tel:${contact.mobile}" style="color: var(--text-primary);">${contact.mobile}</a>` : '-'}
+            </span>
+          </div>
+        </div>
+
+        <!-- Address -->
+        ${contact.address ? `
+          <div class="panel__section">
+            <h3 class="panel__section-title">
+              <i data-lucide="map-pin"></i>
+              Dirección
+            </h3>
+            <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">
+              ${contact.address}
+            </p>
+          </div>
+        ` : ''}
+
+        <!-- Referred By -->
+        ${contact.referredBy ? `
+          <div class="panel__section">
+            <h3 class="panel__section-title">
+              <i data-lucide="user-check"></i>
+              Referido por
+            </h3>
+            <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">
+              ${contact.referredBy}
+            </p>
+          </div>
+        ` : ''}
+
+        <!-- Notes -->
+        ${contact.notes ? `
+          <div class="panel__section">
+            <h3 class="panel__section-title">
+              <i data-lucide="file-text"></i>
+              Notas
+            </h3>
+            <p style="color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.6; white-space: pre-wrap;">
+              ${contact.notes}
+            </p>
+          </div>
+        ` : ''}
+
+        <!-- Quick Actions -->
+        <div class="panel__section">
+          <h3 class="panel__section-title">
+            <i data-lucide="zap"></i>
+            Acciones Rápidas
+          </h3>
+          <div style="display: flex; gap: 0.5rem;">
+            ${contact.phone ? `
+              <a href="tel:${contact.phone}" class="btn btn--outline" style="flex: 1;">
+                <i data-lucide="phone"></i>
+                Llamar
+              </a>
+            ` : ''}
+            ${contact.email ? `
+              <a href="mailto:${contact.email}" class="btn btn--outline" style="flex: 1;">
+                <i data-lucide="mail"></i>
+                Email
+              </a>
+            ` : ''}
+            ${contact.phone ? `
+              <a href="https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn--outline" style="flex: 1;">
+                <i data-lucide="message-circle"></i>
+                WhatsApp
+              </a>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.open(content);
+    this.setupContactPanelEvents(contactId);
+  },
+
+  // Setup events for contact panel
+  setupContactPanelEvents(contactId) {
+    // Close button
+    document.getElementById('panel-close').addEventListener('click', () => this.close());
+
+    // Edit button
+    document.getElementById('panel-edit')?.addEventListener('click', () => {
+      this.close();
+      Modals.editContact(contactId);
+    });
   }
 };

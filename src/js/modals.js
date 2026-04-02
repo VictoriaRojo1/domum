@@ -1686,6 +1686,195 @@ const Modals = {
     });
   },
 
+  // Edit Contact Modal
+  editContact(contactId) {
+    const contact = DataStore.getContactById(contactId);
+    if (!contact) {
+      Toast.show('error', 'Contacto no encontrado');
+      return;
+    }
+
+    const content = `
+      <div class="modal__header">
+        <h2 class="modal__title">Editar Contacto</h2>
+        <button class="modal__close" id="modal-close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal__body form-modal">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre Completo</label>
+            <input type="text" class="form-input" id="contact-name" placeholder="Nombre y apellido" value="${contact.name || ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" id="contact-type">
+              <option value="propietario" ${contact.type === 'propietario' ? 'selected' : ''}>Propietario</option>
+              <option value="inquilino" ${contact.type === 'inquilino' ? 'selected' : ''}>Inquilino</option>
+              <option value="comprador_potencial" ${contact.type === 'comprador_potencial' ? 'selected' : ''}>Comprador Potencial</option>
+              <option value="inversor" ${contact.type === 'inversor' ? 'selected' : ''}>Inversor</option>
+              <option value="constructora" ${contact.type === 'constructora' ? 'selected' : ''}>Constructora</option>
+              <option value="colega" ${contact.type === 'colega' ? 'selected' : ''}>Colega</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="contact-email" placeholder="email@ejemplo.com" value="${contact.email || ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" class="form-input" id="contact-phone" placeholder="+54 9 11 1234-5678" value="${contact.phone || ''}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dirección</label>
+          <input type="text" class="form-input" id="contact-address" placeholder="Dirección completa" value="${contact.address || ''}">
+        </div>
+        <div class="form-group" style="position: relative;">
+          <label class="form-label">Referido por</label>
+          <input type="text" class="form-input" id="contact-referred-by" placeholder="Nombre de quien refirió" autocomplete="off" value="${contact.referredBy || ''}">
+          <div id="referred-by-suggestions" class="autocomplete-suggestions" style="display: none;"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <textarea class="form-textarea" id="contact-notes" rows="3" placeholder="Notas adicionales...">${contact.notes || ''}</textarea>
+        </div>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn--outline" id="modal-cancel">Cancelar</button>
+        <button class="btn btn--primary" id="modal-save">Guardar Cambios</button>
+      </div>
+    `;
+
+    this.open(content, 'md');
+
+    // Setup autocomplete for "Referido por"
+    const referredByInput = document.getElementById('contact-referred-by');
+    const suggestionsDiv = document.getElementById('referred-by-suggestions');
+
+    if (referredByInput && suggestionsDiv) {
+      referredByInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+
+        if (query.length < 2) {
+          suggestionsDiv.style.display = 'none';
+          return;
+        }
+
+        // Filter contacts by name (exclude current contact)
+        const matches = DataStore.contacts
+          .filter(c => c.id !== contactId && c.name.toLowerCase().includes(query))
+          .slice(0, 5);
+
+        if (matches.length === 0) {
+          suggestionsDiv.style.display = 'none';
+          return;
+        }
+
+        suggestionsDiv.innerHTML = matches.map(c => `
+          <div class="autocomplete-item" data-name="${c.name}">
+            <span class="autocomplete-name">${c.name}</span>
+            ${c.type ? `<span class="autocomplete-type">${c.type}</span>` : ''}
+          </div>
+        `).join('');
+        suggestionsDiv.style.display = 'block';
+
+        // Handle click on suggestion
+        suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+          item.addEventListener('click', () => {
+            referredByInput.value = item.dataset.name;
+            suggestionsDiv.style.display = 'none';
+          });
+        });
+      });
+
+      // Hide suggestions when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!referredByInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+          suggestionsDiv.style.display = 'none';
+        }
+      });
+    }
+
+    // Setup save button
+    document.getElementById('modal-close')?.addEventListener('click', () => this.close());
+    document.getElementById('modal-cancel')?.addEventListener('click', () => this.close());
+    document.getElementById('modal-save')?.addEventListener('click', async () => {
+      const name = document.getElementById('contact-name')?.value?.trim();
+      const type = document.getElementById('contact-type')?.value;
+      const email = document.getElementById('contact-email')?.value?.trim();
+      const phone = document.getElementById('contact-phone')?.value?.trim();
+      const address = document.getElementById('contact-address')?.value?.trim();
+      const referredBy = document.getElementById('contact-referred-by')?.value?.trim();
+      const notes = document.getElementById('contact-notes')?.value?.trim();
+
+      // Validation
+      if (!name) {
+        Toast.show('error', 'Campo requerido', 'El nombre es requerido');
+        return;
+      }
+
+      // Email validation (optional)
+      if (email) {
+        const emailValidation = FormValidation.validateEmail(email);
+        if (!emailValidation.isValid) {
+          Toast.show('error', 'Email inválido', emailValidation.error);
+          return;
+        }
+      }
+
+      const saveBtn = document.getElementById('modal-save');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Guardando...';
+      if (window.lucide) lucide.createIcons();
+
+      try {
+        if (DataStore.useAPI && API.getAccessToken()) {
+          await DataStore.updateContactViaAPI(contactId, {
+            name,
+            type,
+            email: email || null,
+            phone: phone || null,
+            address: address || null,
+            referredBy: referredBy || null,
+            notes: notes || null
+          });
+        } else {
+          // Fallback to local (demo mode)
+          const contactIndex = DataStore.contacts.findIndex(c => c.id === contactId);
+          if (contactIndex !== -1) {
+            DataStore.contacts[contactIndex] = {
+              ...DataStore.contacts[contactIndex],
+              name,
+              type,
+              email,
+              phone,
+              address,
+              referredBy,
+              notes,
+              updatedAt: new Date().toISOString()
+            };
+          }
+        }
+
+        Toast.show('success', 'Contacto actualizado correctamente');
+        this.close();
+
+        // Refresh contacts page if visible
+        if (typeof App !== 'undefined' && App.currentPage === 'contactos') {
+          App.navigate('contactos');
+        }
+      } catch (error) {
+        Toast.show('error', 'Error', error.message || 'No se pudo actualizar el contacto');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Guardar Cambios';
+      }
+    });
+  },
+
   // New Transaction Modal
   newTransaction() {
     const content = `
