@@ -267,7 +267,8 @@ const App = {
         await Promise.all([
           DataStore.loadLeadsFromAPI(),
           DataStore.loadPropertiesFromAPI(),
-          DataStore.loadUsersFromAPI()
+          DataStore.loadUsersFromAPI(),
+          DataStore.loadContactsFromAPI()
         ]);
 
         loginScreen.classList.add('hidden');
@@ -313,7 +314,8 @@ const App = {
       await Promise.all([
         DataStore.loadLeadsFromAPI(),
         DataStore.loadPropertiesFromAPI(),
-        DataStore.loadUsersFromAPI()
+        DataStore.loadUsersFromAPI(),
+        DataStore.loadContactsFromAPI()
       ]);
 
       document.getElementById('login-screen').classList.add('hidden');
@@ -1029,7 +1031,18 @@ const App = {
     });
   },
 
-  setupContactsPage() {
+  async setupContactsPage() {
+    // Load contacts from API
+    if (API.getAccessToken()) {
+      try {
+        await DataStore.loadContactsFromAPI();
+        // Re-render the contacts table with fresh data
+        this.renderContactsTable();
+      } catch (error) {
+        console.warn('Could not load contacts from API:', error);
+      }
+    }
+
     // Contact row clicks (outside action buttons)
     Utils.delegate(document.getElementById('content'), 'click', '.contact-row', (e, target) => {
       if (!e.target.closest('.table-actions')) {
@@ -1059,6 +1072,37 @@ const App = {
     });
 
     // Search is now handled by global header search
+  },
+
+  renderContactsTable() {
+    const contacts = DataStore.getContacts();
+    const tbody = document.getElementById('contacts-tbody');
+
+    if (tbody) {
+      tbody.innerHTML = contacts.map(c => Components.contactRow(c)).join('');
+
+      // Re-render icons
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+
+    // Update tab counts
+    const allCount = contacts.length;
+    const propietariosCount = contacts.filter(c => c.type === 'propietario').length;
+    const compradoresCount = contacts.filter(c => c.type === 'comprador_potencial').length;
+    const constructorasCount = contacts.filter(c => c.type === 'constructora').length;
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      const tabId = tab.dataset.tab;
+      const countEl = tab.querySelector('.tab__count');
+      if (countEl) {
+        if (tabId === 'all') countEl.textContent = allCount;
+        if (tabId === 'propietario') countEl.textContent = propietariosCount;
+        if (tabId === 'comprador_potencial') countEl.textContent = compradoresCount;
+        if (tabId === 'constructora') countEl.textContent = constructorasCount;
+      }
+    });
   },
 
   setupCalendarPage() {
