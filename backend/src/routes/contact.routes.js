@@ -90,7 +90,9 @@ router.post('/',
     body('phone').optional().trim(),
     body('company').optional().trim(),
     body('type').optional().trim(),
-    body('notes').optional().trim()
+    body('address').optional().trim(),
+    body('notes').optional().trim(),
+    body('referredBy').optional().trim()
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -98,7 +100,7 @@ router.post('/',
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, phone, company, type, notes } = req.body;
+    const { name, email, phone, company, type, address, notes, referredBy } = req.body;
 
     const contact = await prisma.contact.create({
       data: {
@@ -107,7 +109,9 @@ router.post('/',
         phone,
         company,
         type,
-        notes
+        address,
+        notes,
+        referredBy
       }
     });
 
@@ -131,7 +135,9 @@ router.put('/:id',
     body('phone').optional().trim(),
     body('company').optional().trim(),
     body('type').optional().trim(),
-    body('notes').optional().trim()
+    body('address').optional().trim(),
+    body('notes').optional().trim(),
+    body('referredBy').optional().trim()
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -147,7 +153,7 @@ router.put('/:id',
       return res.status(404).json({ error: 'Contacto no encontrado' });
     }
 
-    const { name, email, phone, company, type, notes } = req.body;
+    const { name, email, phone, company, type, address, notes, referredBy } = req.body;
 
     const contact = await prisma.contact.update({
       where: { id: req.params.id },
@@ -157,7 +163,9 @@ router.put('/:id',
         ...(phone !== undefined && { phone }),
         ...(company !== undefined && { company }),
         ...(type !== undefined && { type }),
-        ...(notes !== undefined && { notes })
+        ...(address !== undefined && { address }),
+        ...(notes !== undefined && { notes }),
+        ...(referredBy !== undefined && { referredBy })
       }
     });
 

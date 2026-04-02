@@ -1518,11 +1518,11 @@ const Modals = {
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Nombre Completo</label>
-            <input type="text" class="form-input" placeholder="Nombre y apellido">
+            <input type="text" class="form-input" id="contact-name" placeholder="Nombre y apellido">
           </div>
           <div class="form-group">
             <label class="form-label">Tipo</label>
-            <select class="form-select">
+            <select class="form-select" id="contact-type">
               <option value="propietario">Propietario</option>
               <option value="inquilino">Inquilino</option>
               <option value="comprador_potencial">Comprador Potencial</option>
@@ -1534,20 +1534,25 @@ const Modals = {
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Email</label>
-            <input type="email" class="form-input" placeholder="email@ejemplo.com">
+            <input type="email" class="form-input" id="contact-email" placeholder="email@ejemplo.com">
           </div>
           <div class="form-group">
             <label class="form-label">Teléfono</label>
-            <input type="tel" class="form-input" placeholder="+54 9 11 1234-5678">
+            <input type="tel" class="form-input" id="contact-phone" placeholder="+54 9 11 1234-5678">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Dirección</label>
-          <input type="text" class="form-input" placeholder="Dirección completa">
+          <input type="text" class="form-input" id="contact-address" placeholder="Dirección completa">
+        </div>
+        <div class="form-group" style="position: relative;">
+          <label class="form-label">Referido por</label>
+          <input type="text" class="form-input" id="contact-referred-by" placeholder="Nombre de quien refirió" autocomplete="off">
+          <div id="referred-by-suggestions" class="autocomplete-suggestions" style="display: none;"></div>
         </div>
         <div class="form-group">
           <label class="form-label">Notas</label>
-          <textarea class="form-textarea" rows="3" placeholder="Notas adicionales..."></textarea>
+          <textarea class="form-textarea" id="contact-notes" rows="3" placeholder="Notas adicionales..."></textarea>
         </div>
       </div>
       <div class="modal__footer">
@@ -1557,8 +1562,126 @@ const Modals = {
     `;
 
     this.open(content, 'md');
-    this.setupModalButtons(() => {
-      Toast.show('success', 'Contacto creado correctamente');
+
+    // Setup autocomplete for "Referido por"
+    const referredByInput = document.getElementById('contact-referred-by');
+    const suggestionsDiv = document.getElementById('referred-by-suggestions');
+
+    if (referredByInput && suggestionsDiv) {
+      referredByInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+
+        if (query.length < 2) {
+          suggestionsDiv.style.display = 'none';
+          return;
+        }
+
+        // Filter contacts by name
+        const matches = DataStore.contacts
+          .filter(c => c.name.toLowerCase().includes(query))
+          .slice(0, 5);
+
+        if (matches.length === 0) {
+          suggestionsDiv.style.display = 'none';
+          return;
+        }
+
+        suggestionsDiv.innerHTML = matches.map(c => `
+          <div class="autocomplete-item" data-name="${c.name}">
+            <span class="autocomplete-name">${c.name}</span>
+            ${c.type ? `<span class="autocomplete-type">${c.type}</span>` : ''}
+          </div>
+        `).join('');
+        suggestionsDiv.style.display = 'block';
+
+        // Handle click on suggestion
+        suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+          item.addEventListener('click', () => {
+            referredByInput.value = item.dataset.name;
+            suggestionsDiv.style.display = 'none';
+          });
+        });
+      });
+
+      // Hide suggestions when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!referredByInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+          suggestionsDiv.style.display = 'none';
+        }
+      });
+    }
+
+    // Setup save button
+    document.getElementById('modal-close')?.addEventListener('click', () => this.close());
+    document.getElementById('modal-cancel')?.addEventListener('click', () => this.close());
+    document.getElementById('modal-save')?.addEventListener('click', async () => {
+      const name = document.getElementById('contact-name')?.value?.trim();
+      const type = document.getElementById('contact-type')?.value;
+      const email = document.getElementById('contact-email')?.value?.trim();
+      const phone = document.getElementById('contact-phone')?.value?.trim();
+      const address = document.getElementById('contact-address')?.value?.trim();
+      const referredBy = document.getElementById('contact-referred-by')?.value?.trim();
+      const notes = document.getElementById('contact-notes')?.value?.trim();
+
+      // Validation
+      if (!name) {
+        Toast.show('error', 'Campo requerido', 'El nombre es requerido');
+        return;
+      }
+
+      // Email validation (optional)
+      if (email) {
+        const emailValidation = FormValidation.validateEmail(email);
+        if (!emailValidation.isValid) {
+          Toast.show('error', 'Email inválido', emailValidation.error);
+          return;
+        }
+      }
+
+      const saveBtn = document.getElementById('modal-save');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Guardando...';
+      if (window.lucide) lucide.createIcons();
+
+      try {
+        if (DataStore.useAPI && API.getAccessToken()) {
+          await DataStore.createContactViaAPI({
+            name,
+            type,
+            email: email || null,
+            phone: phone || null,
+            address: address || null,
+            referredBy: referredBy || null,
+            notes: notes || null
+          });
+        } else {
+          // Fallback to local (demo mode)
+          const newContact = {
+            id: Utils.generateId('contact'),
+            name,
+            type,
+            email,
+            phone,
+            address,
+            referredBy,
+            notes,
+            createdAt: new Date().toISOString()
+          };
+          DataStore.contacts.unshift(newContact);
+        }
+
+        Toast.show('success', 'Contacto creado correctamente');
+        this.close();
+
+        // Refresh contacts page if visible
+        if (typeof App !== 'undefined' && App.currentPage === 'contactos') {
+          App.navigate('contactos');
+        }
+      } catch (error) {
+        Toast.show('error', 'Error', error.message || 'No se pudo crear el contacto');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Guardar Contacto';
+      }
     });
   },
 
