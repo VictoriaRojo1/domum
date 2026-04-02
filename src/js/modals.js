@@ -3,6 +3,116 @@
  * All modal templates and handling logic
  */
 
+/**
+ * Form Validation Helper
+ * Provides consistent validation and error messages
+ */
+const FormValidation = {
+  // Email regex pattern
+  emailPattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+
+  // Password validation
+  validatePassword(password) {
+    const errors = [];
+
+    if (!password || password.length < 8) {
+      errors.push('Debe tener al menos 8 caracteres');
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Debe incluir al menos una mayúscula');
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push('Debe incluir al menos una minúscula');
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push('Debe incluir al menos un número');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors
+    };
+  },
+
+  // Email validation
+  validateEmail(email) {
+    if (!email) return { isValid: true, error: null }; // Optional field
+
+    if (!this.emailPattern.test(email)) {
+      return { isValid: false, error: 'El formato del email es inválido' };
+    }
+    return { isValid: true, error: null };
+  },
+
+  // Required email validation
+  validateRequiredEmail(email) {
+    if (!email || !email.trim()) {
+      return { isValid: false, error: 'El email es requerido' };
+    }
+    if (!this.emailPattern.test(email)) {
+      return { isValid: false, error: 'El formato del email es inválido' };
+    }
+    return { isValid: true, error: null };
+  },
+
+  // Numeric validation
+  validatePositiveNumber(value, fieldName) {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return { isValid: false, error: `${fieldName} debe ser un número mayor a 0` };
+    }
+    return { isValid: true, error: null };
+  },
+
+  // Date range validation
+  validateDateRange(startDate, endDate) {
+    if (!startDate || !endDate) {
+      return { isValid: false, error: 'Las fechas son requeridas' };
+    }
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (end <= start) {
+      return { isValid: false, error: 'La fecha de fin debe ser posterior a la fecha de inicio' };
+    }
+    return { isValid: true, error: null };
+  },
+
+  // Budget range validation
+  validateBudgetRange(min, max) {
+    if (!min && !max) return { isValid: true, error: null }; // Both optional
+
+    const minNum = parseFloat(min) || 0;
+    const maxNum = parseFloat(max) || Infinity;
+
+    if (min && max && minNum >= maxNum) {
+      return { isValid: false, error: 'El presupuesto mínimo debe ser menor al máximo' };
+    }
+    return { isValid: true, error: null };
+  },
+
+  // Percentage validation (0-100)
+  validatePercentage(value, fieldName) {
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 0 || num > 100) {
+      return { isValid: false, error: `${fieldName} debe estar entre 0 y 100` };
+    }
+    return { isValid: true, error: null };
+  },
+
+  // Show validation error with Toast
+  showError(title, message) {
+    Toast.show('error', title, message);
+  },
+
+  // Show multiple validation errors
+  showErrors(title, errors) {
+    if (Array.isArray(errors) && errors.length > 0) {
+      Toast.show('error', title, errors.join('. '));
+    }
+  }
+};
+
 const Modals = {
   overlay: null,
   container: null,
@@ -430,19 +540,22 @@ const Modals = {
 
       // Validate required fields
       if (!propertyData.title) {
-        Toast.show('error', 'Error', 'El título es requerido');
-        return;
-      }
-      if (!propertyData.price) {
-        Toast.show('error', 'Error', 'El precio es requerido');
+        Toast.show('error', 'Campo requerido', 'El título es requerido');
         return;
       }
       if (!propertyData.address) {
-        Toast.show('error', 'Error', 'La dirección es requerida');
+        Toast.show('error', 'Campo requerido', 'La dirección es requerida');
         return;
       }
       if (!propertyData.city) {
-        Toast.show('error', 'Error', 'La ciudad es requerida');
+        Toast.show('error', 'Campo requerido', 'La ciudad es requerida');
+        return;
+      }
+
+      // Price validation - must be a positive number
+      const priceValidation = FormValidation.validatePositiveNumber(propertyData.price, 'El precio');
+      if (!priceValidation.isValid) {
+        Toast.show('error', 'Precio inválido', priceValidation.error);
         return;
       }
 
@@ -1138,19 +1251,41 @@ const Modals = {
 
       const name = nameInput?.value?.trim();
       if (!name) {
-        Toast.show('error', 'Error', 'El nombre es requerido');
+        Toast.show('error', 'Campo requerido', 'El nombre es requerido');
         return;
+      }
+
+      // Email validation (optional but must be valid if provided)
+      const email = emailInput?.value?.trim();
+      if (email) {
+        const emailValidation = FormValidation.validateEmail(email);
+        if (!emailValidation.isValid) {
+          Toast.show('error', 'Email inválido', emailValidation.error);
+          return;
+        }
+      }
+
+      // Budget validation (min must be less than max)
+      const budgetMin = budgetMinInput?.value ? parseFloat(budgetMinInput.value) : null;
+      const budgetMax = budgetMaxInput?.value ? parseFloat(budgetMaxInput.value) : null;
+
+      if (budgetMin !== null && budgetMax !== null) {
+        const budgetValidation = FormValidation.validateBudgetRange(budgetMin, budgetMax);
+        if (!budgetValidation.isValid) {
+          Toast.show('error', 'Presupuesto inválido', budgetValidation.error);
+          return;
+        }
       }
 
       const leadData = {
         name,
-        email: emailInput?.value?.trim() || null,
+        email: email || null,
         phone: phoneInput?.value?.trim() || null,
         source: sourceSelect?.value || 'referido',
         assignedTo: assignedSelect?.value || null,
         property: propertySelect?.value || null,
-        budgetMin: parseFloat(budgetMinInput?.value) || null,
-        budgetMax: parseFloat(budgetMaxInput?.value) || null,
+        budgetMin: budgetMin,
+        budgetMax: budgetMax,
         notes: notesTextarea?.value?.trim() || null
       };
 
@@ -1961,9 +2096,25 @@ const Modals = {
         return;
       }
 
+      // Date range validation - end date must be after start date
+      const dateValidation = FormValidation.validateDateRange(startDate, endDate);
+      if (!dateValidation.isValid) {
+        Toast.show('error', 'Fechas inválidas', dateValidation.error);
+        return;
+      }
+
       if (!monthlyRent || parseFloat(monthlyRent) <= 0) {
         Toast.show('error', 'Monto inválido', 'Ingresá el alquiler mensual');
         return;
+      }
+
+      // Adjustment percentage validation (0-100)
+      if (adjustmentPercentage) {
+        const percentageValidation = FormValidation.validatePercentage(adjustmentPercentage, 'El porcentaje de ajuste');
+        if (!percentageValidation.isValid) {
+          Toast.show('error', 'Porcentaje inválido', percentageValidation.error);
+          return;
+        }
       }
 
       if (!validateGuarantors()) {
@@ -2177,6 +2328,30 @@ const Modals = {
       const guarantorPhone = document.getElementById('edit-rental-guarantor-phone')?.value?.trim();
       const notes = document.getElementById('edit-rental-notes')?.value?.trim();
 
+      // Validation - Date range
+      if (startDate && endDate) {
+        const dateValidation = FormValidation.validateDateRange(startDate, endDate);
+        if (!dateValidation.isValid) {
+          Toast.show('error', 'Fechas inválidas', dateValidation.error);
+          return;
+        }
+      }
+
+      // Validation - Adjustment percentage (0-100)
+      if (adjustmentPercentage) {
+        const percentageValidation = FormValidation.validatePercentage(adjustmentPercentage, 'El porcentaje de ajuste');
+        if (!percentageValidation.isValid) {
+          Toast.show('error', 'Porcentaje inválido', percentageValidation.error);
+          return;
+        }
+      }
+
+      // Validation - Monthly rent
+      if (!monthlyRent || parseFloat(monthlyRent) <= 0) {
+        Toast.show('error', 'Monto inválido', 'El alquiler mensual debe ser mayor a 0');
+        return;
+      }
+
       try {
         const saveBtn = document.getElementById('modal-save');
         saveBtn.disabled = true;
@@ -2310,13 +2485,22 @@ const Modals = {
       const passwordConfirm = document.getElementById('user-password-confirm')?.value;
 
       // Validation
-      if (!name || !email || !role) {
-        Toast.show('error', 'Campos requeridos', 'Completá nombre, email y rol');
+      if (!name || !role) {
+        Toast.show('error', 'Campos requeridos', 'Completá nombre y rol');
         return;
       }
 
-      if (!password || password.length < 8) {
-        Toast.show('error', 'Contraseña inválida', 'La contraseña debe tener al menos 8 caracteres');
+      // Email validation
+      const emailValidation = FormValidation.validateRequiredEmail(email);
+      if (!emailValidation.isValid) {
+        Toast.show('error', 'Email inválido', emailValidation.error);
+        return;
+      }
+
+      // Password validation (must have uppercase, lowercase, number, min 8 chars)
+      const passwordValidation = FormValidation.validatePassword(password);
+      if (!passwordValidation.isValid) {
+        Toast.show('error', 'Contraseña inválida', passwordValidation.errors.join('. '));
         return;
       }
 
@@ -2469,15 +2653,23 @@ const Modals = {
       const passwordConfirm = document.getElementById('edit-user-password-confirm')?.value;
 
       // Validation
-      if (!name || !email) {
-        Toast.show('error', 'Campos requeridos', 'Completá nombre y email');
+      if (!name) {
+        Toast.show('error', 'Campo requerido', 'El nombre es requerido');
         return;
       }
 
-      // Password validation if changing
+      // Email validation
+      const emailValidation = FormValidation.validateRequiredEmail(email);
+      if (!emailValidation.isValid) {
+        Toast.show('error', 'Email inválido', emailValidation.error);
+        return;
+      }
+
+      // Password validation if changing (must have uppercase, lowercase, number, min 8 chars)
       if (password) {
-        if (password.length < 8) {
-          Toast.show('error', 'Contraseña inválida', 'La contraseña debe tener al menos 8 caracteres');
+        const passwordValidation = FormValidation.validatePassword(password);
+        if (!passwordValidation.isValid) {
+          Toast.show('error', 'Contraseña inválida', passwordValidation.errors.join('. '));
           return;
         }
         if (password !== passwordConfirm) {
