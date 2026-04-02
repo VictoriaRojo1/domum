@@ -1510,122 +1510,107 @@ const Panels = {
       return;
     }
 
-    const typeLabel = Utils.getContactTypeLabel(contact.type);
     const initials = Utils.getInitials(contact.name);
+
+    // Contact types for selector
+    const contactTypes = [
+      { id: 'propietario', name: 'Propietario', color: '#6366f1' },
+      { id: 'comprador_potencial', name: 'Comprador', color: '#06b6d4' },
+      { id: 'constructora', name: 'Constructora', color: '#ec4899' },
+      { id: 'colega', name: 'Colega', color: '#10b981' },
+      { id: 'inquilino', name: 'Inquilino', color: '#f59e0b' },
+      { id: 'inversor', name: 'Inversor', color: '#8b5cf6' }
+    ];
 
     const content = `
       <div class="panel__header">
         <h2 class="panel__title">Detalle del Contacto</h2>
         <div class="panel__actions">
-          <button class="btn btn--ghost btn--icon" title="Editar" id="panel-edit">
-            <i data-lucide="pencil"></i>
-          </button>
           <button class="btn btn--ghost btn--icon" title="Cerrar" id="panel-close">
             <i data-lucide="x"></i>
           </button>
         </div>
       </div>
-      <div class="panel__body">
+      <div class="panel__body" data-contact-id="${contact.id}">
         <!-- Contact Header -->
-        <div class="contact-panel-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-          <div class="contact-avatar" style="width: 64px; height: 64px; font-size: 1.5rem;">${initials}</div>
-          <div>
-            <h3 style="font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">${contact.name}</h3>
-            <span class="badge badge--secondary">${typeLabel}</span>
+        <div class="lead-header">
+          <div class="lead-avatar">${initials}</div>
+          <div class="lead-info">
+            <span class="lead-info__name info-row--editable" data-field="name" data-type="text">${contact.name}</span>
+            <div class="lead-info__status">
+              <div class="stage-selector" data-field="type">
+                ${contactTypes.map(t => `
+                  <button class="stage-selector__btn ${contact.type === t.id ? 'active' : ''}"
+                          data-contact-type="${t.id}"
+                          style="background: ${contact.type === t.id ? t.color + '20' : ''}; color: ${t.color};">
+                    ${t.name}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Contact Info -->
         <div class="panel__section">
-          <h3 class="panel__section-title">
-            <i data-lucide="contact"></i>
-            Información de Contacto
-          </h3>
-          <div class="info-row">
+          <h3 class="panel__section-title">Información de Contacto</h3>
+          <div class="info-row info-row--editable" data-field="email" data-type="email">
             <span class="info-row__label">Email</span>
-            <span class="info-row__value">
-              ${contact.email ? `<a href="mailto:${contact.email}" style="color: var(--accent-cyan);">${contact.email}</a>` : '-'}
-            </span>
+            <span class="info-row__value">${contact.email || 'Agregar email'}</span>
           </div>
-          <div class="info-row">
+          <div class="info-row info-row--editable" data-field="phone" data-type="tel">
             <span class="info-row__label">Teléfono</span>
-            <span class="info-row__value">
-              ${contact.phone ? `<a href="tel:${contact.phone}" style="color: var(--text-primary);">${contact.phone}</a>` : '-'}
-            </span>
+            <span class="info-row__value">${contact.phone || 'Agregar teléfono'}</span>
           </div>
-          <div class="info-row">
+          <div class="info-row info-row--editable" data-field="mobile" data-type="tel">
             <span class="info-row__label">Móvil</span>
-            <span class="info-row__value">
-              ${contact.mobile ? `<a href="tel:${contact.mobile}" style="color: var(--text-primary);">${contact.mobile}</a>` : '-'}
-            </span>
+            <span class="info-row__value">${contact.mobile || 'Agregar móvil'}</span>
           </div>
         </div>
 
         <!-- Address -->
-        ${contact.address ? `
-          <div class="panel__section">
-            <h3 class="panel__section-title">
-              <i data-lucide="map-pin"></i>
-              Dirección
-            </h3>
-            <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">
-              ${contact.address}
-            </p>
+        <div class="panel__section">
+          <h3 class="panel__section-title">Dirección</h3>
+          <div class="info-row info-row--editable" data-field="address" data-type="text">
+            <span class="info-row__label">Dirección</span>
+            <span class="info-row__value">${contact.address || 'Agregar dirección'}</span>
           </div>
-        ` : ''}
+        </div>
 
         <!-- Referred By -->
-        ${contact.referredBy ? `
-          <div class="panel__section">
-            <h3 class="panel__section-title">
-              <i data-lucide="user-check"></i>
-              Referido por
-            </h3>
-            <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">
-              ${contact.referredBy}
-            </p>
+        <div class="panel__section">
+          <h3 class="panel__section-title">Referido por</h3>
+          <div class="info-row info-row--editable" data-field="referredBy" data-type="text">
+            <span class="info-row__label">Referido por</span>
+            <span class="info-row__value">${contact.referredBy || 'Agregar referido'}</span>
           </div>
-        ` : ''}
+        </div>
 
-        <!-- Notes -->
-        ${contact.notes ? `
-          <div class="panel__section">
-            <h3 class="panel__section-title">
-              <i data-lucide="file-text"></i>
-              Notas
-            </h3>
+        <!-- Notes Section -->
+        <div class="panel__section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 class="panel__section-title" style="margin-bottom: 0;">Notas</h3>
+            <button class="btn btn--ghost btn--sm" id="toggle-contact-note-form">
+              <i data-lucide="plus"></i>
+              Agregar
+            </button>
+          </div>
+          <div class="add-note-form" id="add-contact-note-form" style="display: none;">
+            <textarea class="form-textarea" id="new-contact-note-text" rows="3" placeholder="Escribe una nota..."></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
+              <button class="btn btn--ghost btn--sm" id="cancel-contact-note">Cancelar</button>
+              <button class="btn btn--primary btn--sm" id="save-contact-note">Guardar</button>
+            </div>
+          </div>
+          ${contact.notes ? `
             <p style="color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.6; white-space: pre-wrap;">
               ${contact.notes}
             </p>
-          </div>
-        ` : ''}
-
-        <!-- Quick Actions -->
-        <div class="panel__section">
-          <h3 class="panel__section-title">
-            <i data-lucide="zap"></i>
-            Acciones Rápidas
-          </h3>
-          <div style="display: flex; gap: 0.5rem;">
-            ${contact.phone ? `
-              <a href="tel:${contact.phone}" class="btn btn--outline" style="flex: 1;">
-                <i data-lucide="phone"></i>
-                Llamar
-              </a>
-            ` : ''}
-            ${contact.email ? `
-              <a href="mailto:${contact.email}" class="btn btn--outline" style="flex: 1;">
-                <i data-lucide="mail"></i>
-                Email
-              </a>
-            ` : ''}
-            ${contact.phone ? `
-              <a href="https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn--outline" style="flex: 1;">
-                <i data-lucide="message-circle"></i>
-                WhatsApp
-              </a>
-            ` : ''}
-          </div>
+          ` : `
+            <p style="color: var(--text-tertiary); font-size: var(--font-size-sm); font-style: italic;">
+              Sin notas registradas
+            </p>
+          `}
         </div>
       </div>
     `;
@@ -1636,13 +1621,198 @@ const Panels = {
 
   // Setup events for contact panel
   setupContactPanelEvents(contactId) {
+    const contact = DataStore.getContactById(contactId);
+
     // Close button
     document.getElementById('panel-close').addEventListener('click', () => this.close());
 
-    // Edit button
-    document.getElementById('panel-edit')?.addEventListener('click', () => {
-      this.close();
-      Modals.editContact(contactId);
+    // ===== INLINE EDITING =====
+
+    // Type selector buttons
+    document.querySelectorAll('.stage-selector__btn[data-contact-type]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const newType = btn.dataset.contactType;
+        if (newType && newType !== contact.type) {
+          // Update UI immediately
+          document.querySelectorAll('.stage-selector__btn[data-contact-type]').forEach(b => {
+            b.classList.remove('active');
+            b.style.background = '';
+          });
+          btn.classList.add('active');
+          const typeColor = btn.style.color;
+          btn.style.background = typeColor.replace(')', ', 0.2)').replace('rgb', 'rgba');
+
+          // Save to API
+          try {
+            await DataStore.updateContactViaAPI(contactId, { type: newType });
+            contact.type = newType;
+            Toast.show('success', 'Tipo cambiado');
+            // Refresh contacts list if visible
+            if (typeof App !== 'undefined' && App.currentPage === 'contacts') {
+              App.renderContactsPage();
+            }
+          } catch (error) {
+            Toast.show('error', 'Error', error.message);
+          }
+        }
+      });
+    });
+
+    // Editable fields (click to edit)
+    document.querySelectorAll('.panel__body[data-contact-id] .info-row--editable').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (row.classList.contains('info-row--editing')) return;
+
+        const field = row.dataset.field;
+        const type = row.dataset.type || 'text';
+        const valueSpan = row.querySelector('.info-row__value');
+        const currentValue = contact[field] || '';
+
+        // Mark as editing
+        row.classList.add('info-row--editing');
+
+        // Create input
+        const input = document.createElement('input');
+        input.type = type;
+        input.className = 'inline-edit-input';
+        input.value = currentValue;
+        input.placeholder = valueSpan.textContent;
+
+        // Replace value with input
+        const originalHTML = valueSpan.innerHTML;
+        valueSpan.innerHTML = '';
+        valueSpan.appendChild(input);
+        input.focus();
+        input.select();
+
+        // Save on blur or Enter
+        const saveEdit = async () => {
+          const newValue = input.value.trim();
+          row.classList.remove('info-row--editing');
+
+          if (newValue !== currentValue) {
+            valueSpan.innerHTML = newValue || `Agregar ${field}...`;
+            try {
+              await DataStore.updateContactViaAPI(contactId, { [field]: newValue || null });
+              Toast.show('success', 'Guardado');
+              contact[field] = newValue || null;
+            } catch (error) {
+              valueSpan.innerHTML = originalHTML;
+              Toast.show('error', 'Error', error.message);
+            }
+          } else {
+            valueSpan.innerHTML = originalHTML;
+          }
+        };
+
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+          }
+          if (e.key === 'Escape') {
+            row.classList.remove('info-row--editing');
+            valueSpan.innerHTML = originalHTML;
+          }
+        });
+      });
+    });
+
+    // Editable name (in header)
+    const nameSpan = document.querySelector('.lead-info__name.info-row--editable');
+    if (nameSpan) {
+      nameSpan.addEventListener('click', () => {
+        if (nameSpan.classList.contains('info-row--editing')) return;
+
+        const currentValue = contact.name || '';
+        nameSpan.classList.add('info-row--editing');
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'inline-edit-input';
+        input.value = currentValue;
+        input.style.fontSize = 'inherit';
+        input.style.fontWeight = 'inherit';
+
+        const originalHTML = nameSpan.innerHTML;
+        nameSpan.innerHTML = '';
+        nameSpan.appendChild(input);
+        input.focus();
+        input.select();
+
+        const saveEdit = async () => {
+          const newValue = input.value.trim();
+          nameSpan.classList.remove('info-row--editing');
+
+          if (newValue && newValue !== currentValue) {
+            nameSpan.textContent = newValue;
+            try {
+              await DataStore.updateContactViaAPI(contactId, { name: newValue });
+              Toast.show('success', 'Nombre actualizado');
+              contact.name = newValue;
+              // Update avatar
+              const avatar = document.querySelector('.lead-avatar');
+              if (avatar) avatar.textContent = Utils.getInitials(newValue);
+            } catch (error) {
+              nameSpan.innerHTML = originalHTML;
+              Toast.show('error', 'Error', error.message);
+            }
+          } else {
+            nameSpan.innerHTML = originalHTML;
+          }
+        };
+
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+          }
+          if (e.key === 'Escape') {
+            nameSpan.classList.remove('info-row--editing');
+            nameSpan.innerHTML = originalHTML;
+          }
+        });
+      });
+    }
+
+    // Toggle note form
+    const noteForm = document.getElementById('add-contact-note-form');
+    const toggleBtn = document.getElementById('toggle-contact-note-form');
+    const cancelBtn = document.getElementById('cancel-contact-note');
+    const saveBtn = document.getElementById('save-contact-note');
+    const noteTextarea = document.getElementById('new-contact-note-text');
+
+    toggleBtn?.addEventListener('click', () => {
+      noteForm.style.display = noteForm.style.display === 'none' ? 'block' : 'none';
+      if (noteForm.style.display === 'block') {
+        noteTextarea.focus();
+      }
+    });
+
+    cancelBtn?.addEventListener('click', () => {
+      noteForm.style.display = 'none';
+      noteTextarea.value = '';
+    });
+
+    saveBtn?.addEventListener('click', async () => {
+      const newNote = noteTextarea.value.trim();
+      if (newNote) {
+        const timestamp = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const updatedNotes = contact.notes
+          ? `${contact.notes}\n\n[${timestamp}] ${newNote}`
+          : `[${timestamp}] ${newNote}`;
+
+        try {
+          await DataStore.updateContactViaAPI(contactId, { notes: updatedNotes });
+          Toast.show('success', 'Nota agregada');
+          this.close();
+          setTimeout(() => this.contact(contactId), 100);
+        } catch (error) {
+          Toast.show('error', 'Error', error.message);
+        }
+      }
     });
   }
 };
