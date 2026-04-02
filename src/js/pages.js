@@ -301,7 +301,7 @@ const Pages = {
   // Contacts Page
   contactos() {
     const contacts = DataStore.getContacts();
-    const types = ['propietario', 'inquilino', 'comprador_potencial', 'inversor', 'empresa'];
+    const types = ['propietario', 'inquilino', 'comprador_potencial', 'inversor', 'constructora', 'colega'];
 
     return `
       <div class="page page--contactos">
@@ -312,7 +312,7 @@ const Pages = {
               { id: 'all', label: 'Todos', count: contacts.length },
               { id: 'propietario', label: 'Propietarios', count: contacts.filter(c => c.type === 'propietario').length },
               { id: 'comprador_potencial', label: 'Compradores', count: contacts.filter(c => c.type === 'comprador_potencial').length },
-              { id: 'empresa', label: 'Empresas', count: contacts.filter(c => c.type === 'empresa').length }
+              { id: 'constructora', label: 'Constructoras', count: contacts.filter(c => c.type === 'constructora').length }
             ], 'all')}
           </div>
         </div>

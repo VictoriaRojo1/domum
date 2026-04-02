@@ -1527,7 +1527,8 @@ const Modals = {
               <option value="inquilino">Inquilino</option>
               <option value="comprador_potencial">Comprador Potencial</option>
               <option value="inversor">Inversor</option>
-              <option value="empresa">Empresa</option>
+              <option value="constructora">Constructora</option>
+              <option value="colega">Colega</option>
             </select>
           </div>
         </div>

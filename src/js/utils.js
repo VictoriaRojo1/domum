@@ -307,7 +307,8 @@ const Utils = {
       inquilino: 'Inquilino',
       comprador_potencial: 'Comprador Potencial',
       inversor: 'Inversor',
-      empresa: 'Empresa',
+      constructora: 'Constructora',
+      colega: 'Colega',
       tasador: 'Tasador',
       escribano: 'Escribano',
       abogado: 'Abogado'
