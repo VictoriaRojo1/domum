@@ -86,13 +86,13 @@ router.post('/',
   requireModule(MODULES.CONTACTOS),
   [
     body('name').trim().notEmpty().withMessage('El nombre es requerido'),
-    body('email').optional().isEmail().withMessage('Email inválido'),
-    body('phone').optional().trim(),
-    body('company').optional().trim(),
-    body('type').optional().trim(),
-    body('address').optional().trim(),
-    body('notes').optional().trim(),
-    body('referredBy').optional().trim()
+    body('email').optional({ checkFalsy: true }).isEmail().withMessage('Email inválido'),
+    body('phone').optional({ checkFalsy: true }).trim(),
+    body('company').optional({ checkFalsy: true }).trim(),
+    body('type').optional({ checkFalsy: true }).trim(),
+    body('address').optional({ checkFalsy: true }).trim(),
+    body('notes').optional({ checkFalsy: true }).trim(),
+    body('referredBy').optional({ checkFalsy: true }).trim()
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -130,14 +130,14 @@ router.put('/:id',
   authenticate,
   requireModule(MODULES.CONTACTOS),
   [
-    body('name').optional().trim().notEmpty().withMessage('El nombre no puede estar vacío'),
-    body('email').optional().isEmail().withMessage('Email inválido'),
-    body('phone').optional().trim(),
-    body('company').optional().trim(),
-    body('type').optional().trim(),
-    body('address').optional().trim(),
-    body('notes').optional().trim(),
-    body('referredBy').optional().trim()
+    body('name').optional({ checkFalsy: true }).trim().notEmpty().withMessage('El nombre no puede estar vacío'),
+    body('email').optional({ checkFalsy: true }).isEmail().withMessage('Email inválido'),
+    body('phone').optional({ checkFalsy: true }).trim(),
+    body('company').optional({ checkFalsy: true }).trim(),
+    body('type').optional({ checkFalsy: true }).trim(),
+    body('address').optional({ checkFalsy: true }).trim(),
+    body('notes').optional({ checkFalsy: true }).trim(),
+    body('referredBy').optional({ checkFalsy: true }).trim()
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
