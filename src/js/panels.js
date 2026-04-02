@@ -433,36 +433,21 @@ const Panels = {
           </div>
         ` : ''}
 
-        <!-- Quick Activity Buttons -->
+        <!-- Registrar Actividad -->
         <div class="panel__section">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <h3 class="panel__section-title" style="margin-bottom: 0;">Registrar Actividad</h3>
-            <button class="btn btn--ghost btn--sm" id="open-full-activity-modal">
+            <button class="btn btn--ghost btn--sm" id="toggle-activity-form">
               <i data-lucide="plus"></i>
-              Más opciones
+              Agregar
             </button>
           </div>
-          <div class="quick-activity-buttons">
-            <button class="quick-activity-btn" data-activity="llamada_saliente">
-              <i data-lucide="phone-outgoing"></i>
-              Llamada
-            </button>
-            <button class="quick-activity-btn" data-activity="whatsapp">
-              <i data-lucide="message-circle"></i>
-              WhatsApp
-            </button>
-            <button class="quick-activity-btn" data-activity="email">
-              <i data-lucide="mail"></i>
-              Email
-            </button>
-            <button class="quick-activity-btn" data-activity="visita">
-              <i data-lucide="home"></i>
-              Visita
-            </button>
-            <button class="quick-activity-btn" data-activity="nota">
-              <i data-lucide="file-text"></i>
-              Nota
-            </button>
+          <div class="add-activity-form" id="add-activity-form" style="display: none;">
+            <textarea class="form-textarea" id="new-activity-text" rows="3" placeholder="Describe la actividad realizada..."></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
+              <button class="btn btn--ghost btn--sm" id="cancel-activity">Cancelar</button>
+              <button class="btn btn--primary btn--sm" id="save-activity">Guardar</button>
+            </div>
           </div>
         </div>
 
@@ -759,19 +744,44 @@ const Panels = {
       Modals.quickTask(leadId);
     });
 
-    // Quick Activity buttons
-    document.querySelectorAll('.quick-activity-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const activityType = btn.dataset.activity;
-        if (activityType) {
-          Modals.quickActivity(leadId, activityType);
-        }
-      });
+    // Toggle activity form
+    const activityForm = document.getElementById('add-activity-form');
+    const toggleActivityBtn = document.getElementById('toggle-activity-form');
+    const cancelActivityBtn = document.getElementById('cancel-activity');
+    const saveActivityBtn = document.getElementById('save-activity');
+    const activityTextarea = document.getElementById('new-activity-text');
+
+    toggleActivityBtn?.addEventListener('click', () => {
+      activityForm.style.display = activityForm.style.display === 'none' ? 'block' : 'none';
+      if (activityForm.style.display === 'block') {
+        activityTextarea.focus();
+      }
     });
 
-    // Full activity modal button
-    document.getElementById('open-full-activity-modal')?.addEventListener('click', () => {
-      Modals.newActivity(leadId);
+    cancelActivityBtn?.addEventListener('click', () => {
+      activityForm.style.display = 'none';
+      activityTextarea.value = '';
+    });
+
+    saveActivityBtn?.addEventListener('click', async () => {
+      const description = activityTextarea.value.trim();
+      if (description) {
+        try {
+          await DataStore.addLeadActivityViaAPI(leadId, {
+            type: 'nota',
+            description: description
+          });
+          Toast.show('success', 'Actividad registrada');
+          activityForm.style.display = 'none';
+          activityTextarea.value = '';
+
+          // Refresh panel to show new activity
+          this.close();
+          setTimeout(() => this.lead(leadId), 100);
+        } catch (error) {
+          Toast.show('error', 'Error', error.message);
+        }
+      }
     });
 
     // Load more activities button

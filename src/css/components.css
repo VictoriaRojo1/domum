@@ -2263,35 +2263,9 @@
   height: 14px;
 }
 
-/* Quick Activity Buttons */
-.quick-activity-buttons {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.quick-activity-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all var(--transition-fast);
-}
-
-.quick-activity-btn:hover {
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
-}
-
-.quick-activity-btn svg {
-  width: 16px;
-  height: 16px;
+/* Add Activity Form */
+.add-activity-form {
+  margin-bottom: var(--spacing-md);
 }
 
 /* Form checkbox style */
