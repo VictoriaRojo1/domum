@@ -8,40 +8,28 @@
       "order": 1
     },
     {
-      "id": "contacto_inicial",
-      "name": "Contacto Inicial",
-      "color": "#8b5cf6",
-      "order": 2
-    },
-    {
-      "id": "calificado",
-      "name": "Calificado",
+      "id": "en_proceso",
+      "name": "En Proceso",
       "color": "#06b6d4",
-      "order": 3
-    },
-    {
-      "id": "visita_programada",
-      "name": "Visita Programada",
-      "color": "#f59e0b",
-      "order": 4
+      "order": 2
     },
     {
       "id": "negociacion",
       "name": "Negociación",
       "color": "#ec4899",
-      "order": 5
+      "order": 3
     },
     {
-      "id": "cerrado_ganado",
-      "name": "Cerrado Ganado",
+      "id": "cerrado",
+      "name": "Cerrado",
       "color": "#10b981",
-      "order": 6
+      "order": 4
     },
     {
       "id": "perdido",
       "name": "Perdido",
       "color": "#ef4444",
-      "order": 7
+      "order": 5
     }
   ]
 }

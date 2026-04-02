@@ -75,7 +75,7 @@ const Pages = {
             </div>
             <div class="card__body">
               <div class="pipeline-summary">
-                ${DataStore.leadStages.filter(s => !['cerrado_ganado', 'perdido'].includes(s.id)).map(stage => {
+                ${DataStore.leadStages.filter(s => !['cerrado', 'perdido'].includes(s.id)).map(stage => {
                   const count = DataStore.getLeadsByStage(stage.id).length;
                   return `
                     <div class="pipeline-stage">
@@ -1275,15 +1275,12 @@ const Pages = {
               <div class="funnel">
                 ${(() => {
                   const total = DataStore.leads.length;
-                  const calificados = DataStore.leads.filter(l => ['calificado', 'contactado', 'visita', 'negociacion', 'propuesta', 'cerrado_ganado'].includes(l.stage)).length;
-                  const visitas = DataStore.leads.filter(l => ['visita', 'negociacion', 'propuesta', 'cerrado_ganado'].includes(l.stage)).length;
-                  const negociacion = DataStore.leads.filter(l => ['negociacion', 'propuesta', 'cerrado_ganado'].includes(l.stage)).length;
-                  const cerrados = DataStore.leads.filter(l => l.stage === 'cerrado_ganado').length;
-                  const maxVal = Math.max(total, 1);
+                  const enProceso = DataStore.leads.filter(l => ['en_proceso', 'negociacion', 'cerrado'].includes(l.stage)).length;
+                  const negociacion = DataStore.leads.filter(l => ['negociacion', 'cerrado'].includes(l.stage)).length;
+                  const cerrados = DataStore.leads.filter(l => l.stage === 'cerrado').length;
                   return [
                     { label: 'Leads Totales', value: total, width: 100 },
-                    { label: 'Calificados', value: calificados, width: total > 0 ? (calificados / total) * 100 : 0 },
-                    { label: 'Visitas', value: visitas, width: total > 0 ? (visitas / total) * 100 : 0 },
+                    { label: 'En Proceso', value: enProceso, width: total > 0 ? (enProceso / total) * 100 : 0 },
                     { label: 'Negociación', value: negociacion, width: total > 0 ? (negociacion / total) * 100 : 0 },
                     { label: 'Cerrados', value: cerrados, width: total > 0 ? (cerrados / total) * 100 : 0 }
                   ].map(stage => `

@@ -52,7 +52,7 @@ router.get('/stats',
       prisma.lead.count(),
       prisma.lead.count({
         where: {
-          stage: { notIn: ['CERRADO_GANADO', 'PERDIDO'] }
+          stage: { notIn: ['CERRADO', 'PERDIDO'] }
         }
       }),
       prisma.lead.groupBy({

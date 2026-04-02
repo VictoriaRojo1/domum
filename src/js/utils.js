@@ -110,11 +110,9 @@ const Utils = {
       cancelado: 'badge--danger',
       confirmado: 'badge--success',
       nuevo: 'badge--secondary',
-      contacto_inicial: 'badge--info',
-      calificado: 'badge--purple',
-      visita_programada: 'badge--warning',
+      en_proceso: 'badge--info',
       negociacion: 'badge--orange',
-      cerrado_ganado: 'badge--success',
+      cerrado: 'badge--success',
       perdido: 'badge--danger'
     };
     return statusMap[status] || 'badge--secondary';
@@ -133,11 +131,9 @@ const Utils = {
       cancelado: 'Cancelado',
       confirmado: 'Confirmado',
       nuevo: 'Nuevo',
-      contacto_inicial: 'Contacto Inicial',
-      calificado: 'Calificado',
-      visita_programada: 'Visita Programada',
+      en_proceso: 'En Proceso',
       negociacion: 'Negociación',
-      cerrado_ganado: 'Cerrado Ganado',
+      cerrado: 'Cerrado',
       perdido: 'Perdido'
     };
     return labels[status] || status;

@@ -312,25 +312,27 @@ const Panels = {
       <div class="panel__header">
         <h2 class="panel__title">Detalle del Lead</h2>
         <div class="panel__actions">
-          <button class="btn btn--ghost btn--icon" title="Editar" id="panel-edit">
-            <i data-lucide="pencil"></i>
-          </button>
           <button class="btn btn--ghost btn--icon" title="Cerrar" id="panel-close">
             <i data-lucide="x"></i>
           </button>
         </div>
       </div>
-      <div class="panel__body">
+      <div class="panel__body" data-lead-id="${lead.id}">
         <!-- Lead Header -->
         <div class="lead-header">
           <div class="lead-avatar">${Utils.getInitials(lead.name)}</div>
           <div class="lead-info">
-            <span class="lead-info__name">${lead.name}</span>
+            <span class="lead-info__name info-row--editable" data-field="name" data-type="text">${lead.name}</span>
             <div class="lead-info__status">
-              <span class="badge" style="background: ${stage?.color}20; color: ${stage?.color};">
-                ${Utils.getStatusLabel(lead.stage)}
-              </span>
-              <span class="lead-card__score" style="margin-left: 0.5rem;">${lead.score}</span>
+              <div class="stage-selector" data-field="stage">
+                ${DataStore.leadStages.filter(s => s.id !== 'perdido').map(s => `
+                  <button class="stage-selector__btn ${lead.stage === s.id ? 'active' : ''}"
+                          data-stage="${s.id}"
+                          style="background: ${lead.stage === s.id ? s.color + '20' : ''}; color: ${s.color};">
+                    ${s.name}
+                  </button>
+                `).join('')}
+              </div>
             </div>
           </div>
         </div>
@@ -338,17 +340,17 @@ const Panels = {
         <!-- Contact Info -->
         <div class="panel__section">
           <h3 class="panel__section-title">Información de Contacto</h3>
-          <div class="info-row">
-            <span class="info-row__label">Email</span>
-            <span class="info-row__value">${lead.email}</span>
-          </div>
-          <div class="info-row">
+          <div class="info-row info-row--editable" data-field="phone" data-type="tel">
             <span class="info-row__label">Teléfono</span>
-            <span class="info-row__value">${lead.phone}</span>
+            <span class="info-row__value">${lead.phone || 'Agregar teléfono'}</span>
           </div>
-          <div class="info-row">
-            <span class="info-row__label">Fuente</span>
-            <span class="info-row__value">${lead.source}</span>
+          <div class="info-row info-row--editable" data-field="email" data-type="email">
+            <span class="info-row__label">Email</span>
+            <span class="info-row__value">${lead.email || 'Agregar email'}</span>
+          </div>
+          <div class="info-row info-row--editable" data-field="notes" data-type="textarea">
+            <span class="info-row__label">Notas</span>
+            <span class="info-row__value">${lead.notes || 'Agregar notas...'}</span>
           </div>
         </div>
 
@@ -539,15 +541,168 @@ const Panels = {
   // Setup events for lead panel
   setupLeadPanelEvents(leadId) {
     const lead = DataStore.getLeadById(leadId);
+    const panelBody = document.querySelector('.panel__body[data-lead-id]');
 
     // Close button
     document.getElementById('panel-close').addEventListener('click', () => this.close());
 
-    // Edit button
-    document.getElementById('panel-edit')?.addEventListener('click', () => {
-      this.close();
-      Modals.editLead(leadId);
+    // ===== INLINE EDITING =====
+
+    // Stage selector buttons
+    document.querySelectorAll('.stage-selector__btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const newStage = btn.dataset.stage;
+        if (newStage && newStage !== lead.stage) {
+          // Update UI immediately
+          document.querySelectorAll('.stage-selector__btn').forEach(b => {
+            b.classList.remove('active');
+            b.style.background = '';
+          });
+          btn.classList.add('active');
+          const stageInfo = DataStore.leadStages.find(s => s.id === newStage);
+          btn.style.background = stageInfo.color + '20';
+
+          // Save to API
+          try {
+            await DataStore.updateLeadViaAPI(leadId, { stage: newStage });
+            Toast.show('success', `Movido a "${stageInfo.name}"`);
+            // Refresh CRM if open
+            if (typeof App !== 'undefined' && App.currentPage === 'crm') {
+              App.renderCRMPipeline();
+            }
+          } catch (error) {
+            Toast.show('error', 'Error', error.message);
+          }
+        }
+      });
     });
+
+    // Editable fields (click to edit)
+    document.querySelectorAll('.info-row--editable').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (row.classList.contains('info-row--editing')) return;
+
+        const field = row.dataset.field;
+        const type = row.dataset.type || 'text';
+        const valueSpan = row.querySelector('.info-row__value');
+        const currentValue = lead[field] || '';
+
+        // Mark as editing
+        row.classList.add('info-row--editing');
+
+        // Create input
+        let input;
+        if (type === 'textarea') {
+          input = document.createElement('textarea');
+          input.className = 'inline-edit-input';
+          input.rows = 3;
+        } else {
+          input = document.createElement('input');
+          input.type = type;
+          input.className = 'inline-edit-input';
+        }
+        input.value = currentValue;
+        input.placeholder = valueSpan.textContent;
+
+        // Replace value with input
+        const originalHTML = valueSpan.innerHTML;
+        valueSpan.innerHTML = '';
+        valueSpan.appendChild(input);
+        input.focus();
+        input.select();
+
+        // Save on blur or Enter
+        const saveEdit = async () => {
+          const newValue = input.value.trim();
+          row.classList.remove('info-row--editing');
+
+          if (newValue !== currentValue) {
+            valueSpan.innerHTML = newValue || `Agregar ${field}...`;
+            try {
+              await DataStore.updateLeadViaAPI(leadId, { [field]: newValue || null });
+              Toast.show('success', 'Guardado');
+              // Update local cache
+              lead[field] = newValue || null;
+            } catch (error) {
+              valueSpan.innerHTML = originalHTML;
+              Toast.show('error', 'Error', error.message);
+            }
+          } else {
+            valueSpan.innerHTML = originalHTML;
+          }
+        };
+
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && type !== 'textarea') {
+            e.preventDefault();
+            input.blur();
+          }
+          if (e.key === 'Escape') {
+            row.classList.remove('info-row--editing');
+            valueSpan.innerHTML = originalHTML;
+          }
+        });
+      });
+    });
+
+    // Editable name (in header)
+    const nameSpan = document.querySelector('.lead-info__name.info-row--editable');
+    if (nameSpan) {
+      nameSpan.addEventListener('click', () => {
+        if (nameSpan.classList.contains('info-row--editing')) return;
+
+        const currentValue = lead.name || '';
+        nameSpan.classList.add('info-row--editing');
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'inline-edit-input';
+        input.value = currentValue;
+        input.style.fontSize = 'inherit';
+        input.style.fontWeight = 'inherit';
+
+        const originalHTML = nameSpan.innerHTML;
+        nameSpan.innerHTML = '';
+        nameSpan.appendChild(input);
+        input.focus();
+        input.select();
+
+        const saveEdit = async () => {
+          const newValue = input.value.trim();
+          nameSpan.classList.remove('info-row--editing');
+
+          if (newValue && newValue !== currentValue) {
+            nameSpan.textContent = newValue;
+            try {
+              await DataStore.updateLeadViaAPI(leadId, { name: newValue });
+              Toast.show('success', 'Nombre actualizado');
+              lead.name = newValue;
+              // Update avatar
+              const avatar = document.querySelector('.lead-avatar');
+              if (avatar) avatar.textContent = Utils.getInitials(newValue);
+            } catch (error) {
+              nameSpan.innerHTML = originalHTML;
+              Toast.show('error', 'Error', error.message);
+            }
+          } else {
+            nameSpan.innerHTML = originalHTML;
+          }
+        };
+
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+          }
+          if (e.key === 'Escape') {
+            nameSpan.classList.remove('info-row--editing');
+            nameSpan.innerHTML = originalHTML;
+          }
+        });
+      });
+    }
 
     // Property card click
     document.getElementById('lead-property-card')?.addEventListener('click', (e) => {
@@ -1127,8 +1282,8 @@ const Panels = {
 
     // Get user statistics
     const userLeads = DataStore.leads?.filter(l => l.assignedTo === userId) || [];
-    const activeLeads = userLeads.filter(l => !['cerrado_ganado', 'perdido'].includes(l.stage));
-    const wonLeads = userLeads.filter(l => l.stage === 'cerrado_ganado');
+    const activeLeads = userLeads.filter(l => !['cerrado', 'perdido'].includes(l.stage));
+    const wonLeads = userLeads.filter(l => l.stage === 'cerrado');
     const userProperties = DataStore.properties?.filter(p => p.agent?.id === userId) || [];
 
     const content = `

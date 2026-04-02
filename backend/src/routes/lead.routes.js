@@ -311,7 +311,7 @@ router.post('/',
       'REFERIDO', 'INSTAGRAM', 'FACEBOOK', 'LINKEDIN', 'GOOGLE', 'DIRECTO', 'OTRO'
     ]).withMessage('Fuente inválida'),
     body('stage').optional().isIn([
-      'NUEVO', 'CONTACTO_INICIAL', 'CALIFICADO', 'VISITA_PROGRAMADA', 'NEGOCIACION', 'CERRADO_GANADO', 'PERDIDO'
+      'NUEVO', 'EN_PROCESO', 'NEGOCIACION', 'CERRADO', 'PERDIDO'
     ]).withMessage('Etapa inválida'),
     body('budgetMin').optional({ values: 'falsy' }),
     body('budgetMax').optional({ values: 'falsy' }),
@@ -395,7 +395,7 @@ router.put('/:id',
       'REFERIDO', 'INSTAGRAM', 'FACEBOOK', 'LINKEDIN', 'GOOGLE', 'DIRECTO', 'OTRO'
     ]).withMessage('Fuente inválida'),
     body('stage').optional().isIn([
-      'NUEVO', 'CONTACTO_INICIAL', 'CALIFICADO', 'VISITA_PROGRAMADA', 'NEGOCIACION', 'CERRADO_GANADO', 'PERDIDO'
+      'NUEVO', 'EN_PROCESO', 'NEGOCIACION', 'CERRADO', 'PERDIDO'
     ]).withMessage('Etapa inválida'),
     body('score').optional().isInt({ min: 0, max: 100 }).withMessage('Score debe ser entre 0 y 100'),
     body('assignedToId').optional().isString()

@@ -630,7 +630,7 @@ const DataStore = {
     const thisMonth = today.substring(0, 7);
 
     const activeLeads = this.leads.filter(l =>
-      !['cerrado_ganado', 'perdido'].includes(l.stage)
+      !['cerrado', 'perdido'].includes(l.stage)
     ).length;
 
     const monthTransactions = this.transactions.filter(t =>
