@@ -1062,15 +1062,6 @@ const App = {
       }
     });
 
-    // Editar button click
-    Utils.delegate(document.getElementById('content'), 'click', '.btn-contact-edit', (e, target) => {
-      e.stopPropagation();
-      const contactId = target.dataset.contactId;
-      if (contactId) {
-        Modals.editContact(contactId);
-      }
-    });
-
     // Search is now handled by global header search
   },
 

@@ -249,7 +249,6 @@ const Components = {
         <td>
           <div class="table-actions">
             <button class="btn btn--ghost btn--sm btn-contact-view" data-contact-id="${contact.id}">Ver</button>
-            <button class="btn btn--ghost btn--sm btn-contact-edit" data-contact-id="${contact.id}">Editar</button>
           </div>
         </td>
       </tr>
