@@ -1590,6 +1590,32 @@ const API = {
   },
 
   /**
+   * Get proper file extension based on MIME type
+   */
+  getExtensionFromMime(mimeType, fallbackName) {
+    const mimeToExt = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+      'image/heic': 'jpg', // Force HEIC to JPG extension
+      'image/heif': 'jpg'  // Force HEIF to JPG extension
+    };
+
+    if (mimeToExt[mimeType]) {
+      return mimeToExt[mimeType];
+    }
+
+    // Fallback to file extension, but convert heic/heif to jpg
+    const ext = fallbackName.split('.').pop().toLowerCase();
+    if (ext === 'heic' || ext === 'heif') {
+      return 'jpg';
+    }
+    return ext || 'jpg';
+  },
+
+  /**
    * Upload a single file directly to Supabase Storage
    * @param {File} file - File to upload
    * @returns {Promise<Object>} Upload result with URL
@@ -1599,8 +1625,8 @@ const API = {
       // Convert HEIC to JPEG if needed
       const processedFile = await this.convertHeicToJpeg(file);
 
-      // Get extension from processed file
-      const ext = processedFile.name.split('.').pop().toLowerCase();
+      // Get proper extension (never use heic/heif)
+      const ext = this.getExtensionFromMime(processedFile.type, processedFile.name);
       const filename = this.generateFilename(ext);
 
       const response = await fetch(
