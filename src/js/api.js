@@ -1540,11 +1540,51 @@ const API = {
   /**
    * Generate unique filename for uploads
    */
-  generateFilename(originalName) {
-    const ext = originalName.split('.').pop().toLowerCase();
+  generateFilename(extension = 'jpg') {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 8);
-    return `${timestamp}-${random}.${ext}`;
+    return `${timestamp}-${random}.${extension}`;
+  },
+
+  /**
+   * Convert HEIC/HEIF to JPEG (iPhone photos)
+   * @param {File} file - Original file
+   * @returns {Promise<File>} Converted file or original if not HEIC
+   */
+  async convertHeicToJpeg(file) {
+    const isHeic = file.type === 'image/heic' ||
+                   file.type === 'image/heif' ||
+                   file.name.toLowerCase().endsWith('.heic') ||
+                   file.name.toLowerCase().endsWith('.heif');
+
+    if (!isHeic) {
+      return file;
+    }
+
+    // Check if heic2any is available
+    if (typeof heic2any === 'undefined') {
+      console.warn('heic2any not loaded, uploading original HEIC file');
+      return file;
+    }
+
+    try {
+      console.log('Converting HEIC to JPEG...');
+      const blob = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.92
+      });
+
+      // heic2any may return array for multi-image HEIC
+      const resultBlob = Array.isArray(blob) ? blob[0] : blob;
+
+      // Create new File with .jpg extension
+      const newFilename = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+      return new File([resultBlob], newFilename, { type: 'image/jpeg' });
+    } catch (error) {
+      console.error('HEIC conversion error:', error);
+      throw new Error('No se pudo convertir la imagen HEIC. Intentá con otro formato.');
+    }
   },
 
   /**
@@ -1553,20 +1593,24 @@ const API = {
    * @returns {Promise<Object>} Upload result with URL
    */
   async uploadFileToSupabase(file) {
-    const filename = this.generateFilename(file.name);
-    const filePath = filename;
-
     try {
+      // Convert HEIC to JPEG if needed
+      const processedFile = await this.convertHeicToJpeg(file);
+
+      // Get extension from processed file
+      const ext = processedFile.name.split('.').pop().toLowerCase();
+      const filename = this.generateFilename(ext);
+
       const response = await fetch(
-        `${this.SUPABASE_URL}/storage/v1/object/${this.SUPABASE_BUCKET}/${filePath}`,
+        `${this.SUPABASE_URL}/storage/v1/object/${this.SUPABASE_BUCKET}/${filename}`,
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
-            'Content-Type': file.type,
+            'Content-Type': processedFile.type || 'image/jpeg',
             'x-upsert': 'false'
           },
-          body: file
+          body: processedFile
         }
       );
 
@@ -1576,7 +1620,7 @@ const API = {
       }
 
       // Return public URL
-      const publicUrl = `${this.SUPABASE_URL}/storage/v1/object/public/${this.SUPABASE_BUCKET}/${filePath}`;
+      const publicUrl = `${this.SUPABASE_URL}/storage/v1/object/public/${this.SUPABASE_BUCKET}/${filename}`;
       return { success: true, url: publicUrl, filename };
     } catch (error) {
       console.error('Supabase upload error:', error);
