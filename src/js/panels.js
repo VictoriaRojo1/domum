@@ -226,6 +226,15 @@ const Panels = {
       }
 
       try {
+        // Delete images from Supabase first
+        if (property?.images && property.images.length > 0) {
+          for (const imageUrl of property.images) {
+            if (imageUrl.includes('supabase.co')) {
+              await API.deleteFileFromSupabase(imageUrl);
+            }
+          }
+        }
+
         await DataStore.deletePropertyViaAPI(propertyId);
         this.close();
         Toast.show('Propiedad eliminada correctamente', 'success');
