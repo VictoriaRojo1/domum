@@ -1563,29 +1563,34 @@ const API = {
 
     // Check if heic2any is available
     if (typeof heic2any === 'undefined') {
-      console.warn('heic2any not loaded, uploading original HEIC file');
-      return file;
+      console.warn('heic2any not loaded');
+      throw new Error('La librería de conversión no está disponible. Por favor, usá imágenes JPG o PNG.');
     }
 
     try {
       console.log('Converting HEIC to JPEG...');
-      const blob = await heic2any({
-        blob: file,
+
+      // Read file as ArrayBuffer for better compatibility
+      const arrayBuffer = await file.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: file.type });
+
+      const result = await heic2any({
+        blob: blob,
         toType: 'image/jpeg',
-        quality: 0.92
+        quality: 0.92,
+        multiple: false
       });
 
       // heic2any may return array for multi-image HEIC
-      const resultBlob = Array.isArray(blob) ? blob[0] : blob;
+      const resultBlob = Array.isArray(result) ? result[0] : result;
 
       // Create new File with .jpg extension
       const newFilename = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+      console.log('HEIC conversion successful');
       return new File([resultBlob], newFilename, { type: 'image/jpeg' });
     } catch (error) {
       console.error('HEIC conversion error:', error);
-      // If conversion fails, upload original file anyway
-      console.warn('HEIC conversion failed, uploading original file');
-      return file;
+      throw new Error('No se pudo convertir la imagen HEIC. Por favor, convertí la foto a JPG antes de subirla, o configurá tu iPhone: Ajustes → Cámara → Formatos → Más compatible.');
     }
   },
 
