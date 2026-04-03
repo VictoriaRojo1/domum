@@ -1583,7 +1583,9 @@ const API = {
       return new File([resultBlob], newFilename, { type: 'image/jpeg' });
     } catch (error) {
       console.error('HEIC conversion error:', error);
-      throw new Error('No se pudo convertir la imagen HEIC. Intentá con otro formato.');
+      // If conversion fails, upload original file anyway
+      console.warn('HEIC conversion failed, uploading original file');
+      return file;
     }
   },
 
