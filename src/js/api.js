@@ -9,6 +9,11 @@ const API = {
     ? 'http://localhost:3001/api'
     : '/api',
 
+  // Supabase configuration for direct uploads (bypasses Vercel 4.5MB limit)
+  SUPABASE_URL: 'https://lnqgspfmoaqjgneorist.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxucWdzcGZtb2FxamduZW9yaXN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MDg0ODMsImV4cCI6MjA4OTI4NDQ4M30.588UPQEHkA3kQXBWRt6Ia2F0Vouvvq_Q2Gm_S94JXYg',
+  SUPABASE_BUCKET: 'properties',
+
   // =============================================
   // TOKEN MANAGEMENT
   // =============================================
@@ -1529,77 +1534,161 @@ const API = {
   },
 
   // =============================================
-  // FILE UPLOAD
+  // FILE UPLOAD (Direct to Supabase)
   // =============================================
 
   /**
-   * Upload images for a property
+   * Generate unique filename for uploads
+   */
+  generateFilename(originalName) {
+    const ext = originalName.split('.').pop().toLowerCase();
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    return `${timestamp}-${random}.${ext}`;
+  },
+
+  /**
+   * Upload a single file directly to Supabase Storage
+   * @param {File} file - File to upload
+   * @returns {Promise<Object>} Upload result with URL
+   */
+  async uploadFileToSupabase(file) {
+    const filename = this.generateFilename(file.name);
+    const filePath = filename;
+
+    try {
+      const response = await fetch(
+        `${this.SUPABASE_URL}/storage/v1/object/${this.SUPABASE_BUCKET}/${filePath}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+            'Content-Type': file.type,
+            'x-upsert': 'false'
+          },
+          body: file
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Error al subir archivo');
+      }
+
+      // Return public URL
+      const publicUrl = `${this.SUPABASE_URL}/storage/v1/object/public/${this.SUPABASE_BUCKET}/${filePath}`;
+      return { success: true, url: publicUrl, filename };
+    } catch (error) {
+      console.error('Supabase upload error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
+   * Upload images for a property (direct to Supabase, then update backend)
    * @param {string} propertyId - The property ID
    * @param {FileList|File[]} files - Files to upload
    * @returns {Promise<Object>} Upload result with image URLs
    */
   async uploadPropertyImages(propertyId, files) {
-    const formData = new FormData();
+    const uploadedUrls = [];
+    const errors = [];
 
-    // Append all files
+    // Upload each file directly to Supabase
     for (const file of files) {
-      formData.append('images', file);
+      const result = await this.uploadFileToSupabase(file);
+      if (result.success) {
+        uploadedUrls.push(result.url);
+      } else {
+        errors.push(result.error);
+      }
     }
 
+    if (uploadedUrls.length === 0) {
+      return { success: false, error: errors[0] || 'No se pudieron subir las imágenes' };
+    }
+
+    // Update property in backend with new image URLs
     try {
-      const response = await fetch(`${this.BASE_URL}/upload/property/${propertyId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.getAccessToken()}`
-          // Note: Don't set Content-Type for FormData - browser sets it with boundary
-        },
-        body: formData
-      });
+      const property = await this.getProperty(propertyId);
+      const existingImages = property?.images || [];
+      const allImages = [...existingImages, ...uploadedUrls];
 
-      const data = await response.json();
+      await this.updateProperty(propertyId, { images: allImages });
 
-      if (!response.ok) {
-        return { success: false, error: data.error || 'Error al subir imágenes' };
-      }
-
-      return { success: true, ...data };
+      return {
+        success: true,
+        images: uploadedUrls.map(url => ({ url })),
+        allImages,
+        message: `${uploadedUrls.length} imagen(es) subida(s)`
+      };
     } catch (error) {
-      console.error('Upload error:', error);
-      return { success: false, error: 'Error de conexión al subir imágenes' };
+      console.error('Error updating property with images:', error);
+      // Images were uploaded but property update failed
+      return {
+        success: true,
+        images: uploadedUrls.map(url => ({ url })),
+        allImages: uploadedUrls,
+        warning: 'Imágenes subidas pero hubo un error actualizando la propiedad'
+      };
     }
   },
 
   /**
-   * Upload temporary images (for new properties)
+   * Upload temporary images (for new properties) - direct to Supabase
    * @param {FileList|File[]} files - Files to upload
    * @returns {Promise<Object>} Upload result with image URLs
    */
   async uploadTempImages(files) {
-    const formData = new FormData();
+    const uploadedUrls = [];
+    const errors = [];
 
     for (const file of files) {
-      formData.append('images', file);
+      const result = await this.uploadFileToSupabase(file);
+      if (result.success) {
+        uploadedUrls.push({ url: result.url, filename: result.filename });
+      } else {
+        errors.push(result.error);
+      }
     }
 
+    if (uploadedUrls.length === 0) {
+      return { success: false, error: errors[0] || 'No se pudieron subir las imágenes' };
+    }
+
+    return {
+      success: true,
+      images: uploadedUrls,
+      message: `${uploadedUrls.length} imagen(es) subida(s)`
+    };
+  },
+
+  /**
+   * Delete a file from Supabase Storage
+   * @param {string} fileUrl - The full Supabase URL of the file
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteFileFromSupabase(fileUrl) {
+    // Extract filename from URL
+    const match = fileUrl.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)$/);
+    if (!match) return false;
+
+    const filePath = match[1];
+
     try {
-      const response = await fetch(`${this.BASE_URL}/upload/temp`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.getAccessToken()}`
-        },
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: data.error || 'Error al subir imágenes' };
-      }
-
-      return { success: true, ...data };
+      const response = await fetch(
+        `${this.SUPABASE_URL}/storage/v1/object/${this.SUPABASE_BUCKET}/${filePath}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`
+          }
+        }
+      );
+      return response.ok;
     } catch (error) {
-      console.error('Upload error:', error);
-      return { success: false, error: 'Error de conexión al subir imágenes' };
+      console.error('Supabase delete error:', error);
+      return false;
     }
   },
 
@@ -1611,25 +1700,21 @@ const API = {
    */
   async deletePropertyImage(propertyId, imageUrl) {
     try {
-      const response = await fetch(`${this.BASE_URL}/upload/property/${propertyId}/image`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${this.getAccessToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ imageUrl })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: data.error || 'Error al eliminar imagen' };
+      // Delete from Supabase if it's a Supabase URL
+      if (imageUrl.includes('supabase.co')) {
+        await this.deleteFileFromSupabase(imageUrl);
       }
 
-      return { success: true, ...data };
+      // Update property to remove image from array
+      const property = await this.getProperty(propertyId);
+      const updatedImages = (property?.images || []).filter(img => img !== imageUrl);
+
+      await this.updateProperty(propertyId, { images: updatedImages });
+
+      return { success: true, images: updatedImages };
     } catch (error) {
       console.error('Delete image error:', error);
-      return { success: false, error: 'Error de conexión' };
+      return { success: false, error: 'Error al eliminar imagen' };
     }
   },
 
