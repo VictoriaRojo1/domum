@@ -35,7 +35,25 @@ enum LeadSource {
   LINKEDIN
   GOOGLE
   DIRECTO
+  CARTELERIA
   OTRO
+}
+
+enum LeadRelation {
+  PROPIETARIO
+  CLIENTE
+  COLEGA
+}
+
+enum LeadOperation {
+  COMPRAVENTA
+  ALQUILER
+}
+
+enum LeadPriority {
+  ALTA
+  MEDIA
+  BAJA
 }
 
 enum PropertyType {
@@ -163,25 +181,25 @@ enum ActivityOutcome {
 // =============================================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String    @map("password_hash")
-  name          String
-  phone         String?
-  avatar        String?
-  role          Role      @default(VENDEDOR)
-  isActive      Boolean   @default(true) @map("is_active")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  phone        String?
+  avatar       String?
+  role         Role      @default(VENDEDOR)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
 
   // Relations
-  createdBy     User?     @relation("UserCreatedBy", fields: [createdById], references: [id])
-  createdById   String?   @map("created_by_id")
-  createdUsers  User[]    @relation("UserCreatedBy")
+  createdBy    User?   @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdById  String? @map("created_by_id")
+  createdUsers User[]  @relation("UserCreatedBy")
 
-  assignedLeads Lead[]    @relation("LeadAssignedTo")
-  createdLeads  Lead[]    @relation("LeadCreatedBy")
+  assignedLeads Lead[] @relation("LeadAssignedTo")
+  createdLeads  Lead[] @relation("LeadCreatedBy")
 
   assignedProperties Property[] @relation("PropertyAssignedTo")
 
@@ -214,49 +232,52 @@ model RefreshToken {
 }
 
 model Lead {
-  id              String      @id @default(cuid())
-  name            String
-  email           String?
-  phone           String?
-  source          LeadSource  @default(REFERIDO)
-  stage           LeadStage   @default(NUEVO)
-  score           Int         @default(0)
-  budgetMin       Decimal?    @map("budget_min") @db.Decimal(15, 2)
-  budgetMax       Decimal?    @map("budget_max") @db.Decimal(15, 2)
-  budgetCurrency  String?     @default("USD") @map("budget_currency")
-  interests       String[]    @default([])
-  preferredZones  String[]    @default([]) @map("preferred_zones")
-  notes           String?
-  lostReason      String?     @map("lost_reason")
-  closedDate      DateTime?   @map("closed_date")
-  closedAmount    Decimal?    @map("closed_amount") @db.Decimal(15, 2)
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
+  id             String          @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  source         LeadSource      @default(REFERIDO)
+  stage          LeadStage       @default(NUEVO)
+  relation       LeadRelation    @default(CLIENTE)
+  operations     LeadOperation[] @default([])
+  priority       LeadPriority    @default(MEDIA)
+  score          Int             @default(0)
+  budgetMin      Decimal?        @map("budget_min") @db.Decimal(15, 2)
+  budgetMax      Decimal?        @map("budget_max") @db.Decimal(15, 2)
+  budgetCurrency String?         @default("USD") @map("budget_currency")
+  interests      String[]        @default([])
+  preferredZones String[]        @default([]) @map("preferred_zones")
+  notes          String?
+  lostReason     String?         @map("lost_reason")
+  closedDate     DateTime?       @map("closed_date")
+  closedAmount   Decimal?        @map("closed_amount") @db.Decimal(15, 2)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
   // Relations
-  assignedTo      User        @relation("LeadAssignedTo", fields: [assignedToId], references: [id])
-  assignedToId    String      @map("assigned_to_id")
+  assignedTo   User   @relation("LeadAssignedTo", fields: [assignedToId], references: [id])
+  assignedToId String @map("assigned_to_id")
 
-  createdBy       User        @relation("LeadCreatedBy", fields: [createdById], references: [id])
-  createdById     String      @map("created_by_id")
+  createdBy   User   @relation("LeadCreatedBy", fields: [createdById], references: [id])
+  createdById String @map("created_by_id")
 
-  property        Property?   @relation(fields: [propertyId], references: [id])
-  propertyId      String?     @map("property_id")
+  property   Property? @relation(fields: [propertyId], references: [id])
+  propertyId String?   @map("property_id")
 
-  activities      LeadActivity[]
-  events          Event[]
-  tasks           Task[]
+  activities LeadActivity[]
+  events     Event[]
+  tasks      Task[]
 
   @@map("leads")
 }
 
 model LeadActivity {
   id               String          @id @default(cuid())
-  type             ActivityType    // Tipo de actividad
+  type             ActivityType // Tipo de actividad
   date             DateTime
   notes            String?
-  subject          String?         // Asunto (para emails) o título breve
-  duration         Int?            // Duración en minutos (para llamadas/reuniones)
+  subject          String? // Asunto (para emails) o título breve
+  duration         Int? // Duración en minutos (para llamadas/reuniones)
   outcome          ActivityOutcome @default(NO_APLICA)
   followUpRequired Boolean         @default(false) @map("follow_up_required")
   followUpDate     DateTime?       @map("follow_up_date")
@@ -264,53 +285,53 @@ model LeadActivity {
   updatedAt        DateTime        @updatedAt @map("updated_at")
 
   // Relations
-  lead             Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  leadId           String          @map("lead_id")
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId String @map("lead_id")
 
-  createdBy        User            @relation("ActivityCreatedBy", fields: [createdById], references: [id])
-  createdById      String          @map("created_by_id")
+  createdBy   User   @relation("ActivityCreatedBy", fields: [createdById], references: [id])
+  createdById String @map("created_by_id")
 
   @@map("lead_activities")
 }
 
 model Property {
-  id              String            @id @default(cuid())
-  title           String
-  description     String?
-  type            PropertyType
-  operation       PropertyOperation
-  status          PropertyStatus    @default(DISPONIBLE)
-  price           Decimal           @db.Decimal(15, 2)
-  currency        String            @default("USD")
-  address         String
-  city            String
-  neighborhood    String?
-  zipCode         String?           @map("zip_code")
-  latitude        Decimal?          @db.Decimal(10, 8)
-  longitude       Decimal?          @db.Decimal(11, 8)
-  totalArea       Decimal?          @map("total_area") @db.Decimal(10, 2)
-  coveredArea     Decimal?          @map("covered_area") @db.Decimal(10, 2)
-  rooms           Int?
-  bedrooms        Int?
-  bathrooms       Int?
-  parkingSpaces   Int?              @map("parking_spaces")
-  amenities       String[]          @default([])
-  images          String[]          @default([])
-  attachments     String[]          @default([])  // Planos, renders, PDFs, archivos técnicos
-  featured        Boolean           @default(false)
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
+  id            String            @id @default(cuid())
+  title         String
+  description   String?
+  type          PropertyType
+  operation     PropertyOperation
+  status        PropertyStatus    @default(DISPONIBLE)
+  price         Decimal           @db.Decimal(15, 2)
+  currency      String            @default("USD")
+  address       String
+  city          String
+  neighborhood  String?
+  zipCode       String?           @map("zip_code")
+  latitude      Decimal?          @db.Decimal(10, 8)
+  longitude     Decimal?          @db.Decimal(11, 8)
+  totalArea     Decimal?          @map("total_area") @db.Decimal(10, 2)
+  coveredArea   Decimal?          @map("covered_area") @db.Decimal(10, 2)
+  rooms         Int?
+  bedrooms      Int?
+  bathrooms     Int?
+  parkingSpaces Int?              @map("parking_spaces")
+  amenities     String[]          @default([])
+  images        String[]          @default([])
+  attachments   String[]          @default([]) // Planos, renders, PDFs, archivos técnicos
+  featured      Boolean           @default(false)
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
 
   // Relations
-  assignedTo      User?             @relation("PropertyAssignedTo", fields: [assignedToId], references: [id])
-  assignedToId    String?           @map("assigned_to_id")
+  assignedTo   User?   @relation("PropertyAssignedTo", fields: [assignedToId], references: [id])
+  assignedToId String? @map("assigned_to_id")
 
-  leads              Lead[]
-  events             Event[]
-  rentals            Rental[]
-  temporaryBookings  TemporaryBooking[]
-  documents          GeneratedDocument[]
-  tasks              Task[]
+  leads             Lead[]
+  events            Event[]
+  rentals           Rental[]
+  temporaryBookings TemporaryBooking[]
+  documents         GeneratedDocument[]
+  tasks             Task[]
 
   @@map("properties")
 }
@@ -323,7 +344,7 @@ model Transaction {
   currency    String              @default("ARS")
   description String
   date        DateTime
-  reference   String?             // Referencia a propiedad, lead, etc.
+  reference   String? // Referencia a propiedad, lead, etc.
   notes       String?
   createdAt   DateTime            @default(now()) @map("created_at")
   updatedAt   DateTime            @updatedAt @map("updated_at")
@@ -332,23 +353,23 @@ model Transaction {
 }
 
 model Contact {
-  id          String   @id @default(cuid())
-  name        String
-  email       String?
-  phone       String?
-  company     String?
-  type        String?  // propietario, inquilino, proveedor, etc.
-  address     String?
-  notes       String?
-  referredBy  String?  @map("referred_by") // Nombre de quien refirió al contacto
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(cuid())
+  name       String
+  email      String?
+  phone      String?
+  company    String?
+  type       String? // propietario, inquilino, proveedor, etc.
+  address    String?
+  notes      String?
+  referredBy String?  @map("referred_by") // Nombre de quien refirió al contacto
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  events                    Event[]
-  rentalsAsPropietario      Rental[] @relation("RentalPropietario")
-  rentalsAsInquilino        Rental[] @relation("RentalInquilino")
-  bookingsAsPropietario     TemporaryBooking[] @relation("BookingPropietario")
-  bookingsAsGuest           TemporaryBooking[] @relation("BookingGuest")
+  events                Event[]
+  rentalsAsPropietario  Rental[]           @relation("RentalPropietario")
+  rentalsAsInquilino    Rental[]           @relation("RentalInquilino")
+  bookingsAsPropietario TemporaryBooking[] @relation("BookingPropietario")
+  bookingsAsGuest       TemporaryBooking[] @relation("BookingGuest")
 
   @@map("contacts")
 }
@@ -359,30 +380,30 @@ model Event {
   title       String
   description String?
   date        DateTime    @db.Date
-  startTime   String      @map("start_time")  // HH:mm format
-  endTime     String      @map("end_time")    // HH:mm format
+  startTime   String      @map("start_time") // HH:mm format
+  endTime     String      @map("end_time") // HH:mm format
   location    String?
   status      EventStatus @default(PENDIENTE)
-  reminder    Int?        // minutes before event
+  reminder    Int? // minutes before event
   notes       String?
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
   // Relations
-  property    Property?   @relation(fields: [propertyId], references: [id])
-  propertyId  String?     @map("property_id")
+  property   Property? @relation(fields: [propertyId], references: [id])
+  propertyId String?   @map("property_id")
 
-  lead        Lead?       @relation(fields: [leadId], references: [id])
-  leadId      String?     @map("lead_id")
+  lead   Lead?   @relation(fields: [leadId], references: [id])
+  leadId String? @map("lead_id")
 
-  agent       User?       @relation("EventAgent", fields: [agentId], references: [id])
-  agentId     String?     @map("agent_id")
+  agent   User?   @relation("EventAgent", fields: [agentId], references: [id])
+  agentId String? @map("agent_id")
 
-  contact     Contact?    @relation(fields: [contactId], references: [id])
-  contactId   String?     @map("contact_id")
+  contact   Contact? @relation(fields: [contactId], references: [id])
+  contactId String?  @map("contact_id")
 
-  createdBy   User?       @relation("EventCreatedBy", fields: [createdById], references: [id])
-  createdById String?     @map("created_by_id")
+  createdBy   User?   @relation("EventCreatedBy", fields: [createdById], references: [id])
+  createdById String? @map("created_by_id")
 
   @@map("events")
 }
@@ -407,69 +428,69 @@ model Rental {
   updatedAt             DateTime            @updatedAt @map("updated_at")
 
   // Relations
-  property      Property  @relation(fields: [propertyId], references: [id])
-  propertyId    String    @map("property_id")
+  property   Property @relation(fields: [propertyId], references: [id])
+  propertyId String   @map("property_id")
 
-  propietario   Contact   @relation("RentalPropietario", fields: [propietarioId], references: [id])
-  propietarioId String    @map("propietario_id")
+  propietario   Contact @relation("RentalPropietario", fields: [propietarioId], references: [id])
+  propietarioId String  @map("propietario_id")
 
-  inquilino     Contact   @relation("RentalInquilino", fields: [inquilinoId], references: [id])
-  inquilinoId   String    @map("inquilino_id")
+  inquilino   Contact @relation("RentalInquilino", fields: [inquilinoId], references: [id])
+  inquilinoId String  @map("inquilino_id")
 
   @@map("rentals")
 }
 
 model TemporaryBooking {
-  id                String        @id @default(cuid())
-  checkInDate       DateTime      @map("check_in_date") @db.Date
-  checkOutDate      DateTime      @map("check_out_date") @db.Date
-  numberOfNights    Int           @map("number_of_nights")
-  pricePerNight     Decimal       @map("price_per_night") @db.Decimal(15, 2)
-  totalPrice        Decimal       @map("total_price") @db.Decimal(15, 2)
-  currency          String        @default("USD")
-  guestName         String        @map("guest_name")
-  guestEmail        String?       @map("guest_email")
-  guestPhone        String?       @map("guest_phone")
-  numberOfGuests    Int           @map("number_of_guests") @default(1)
-  status            BookingStatus @default(PENDIENTE)
-  confirmationCode  String        @unique @map("confirmation_code")
-  source            String?       // airbnb, booking, directo, etc.
-  notes             String?
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  id               String        @id @default(cuid())
+  checkInDate      DateTime      @map("check_in_date") @db.Date
+  checkOutDate     DateTime      @map("check_out_date") @db.Date
+  numberOfNights   Int           @map("number_of_nights")
+  pricePerNight    Decimal       @map("price_per_night") @db.Decimal(15, 2)
+  totalPrice       Decimal       @map("total_price") @db.Decimal(15, 2)
+  currency         String        @default("USD")
+  guestName        String        @map("guest_name")
+  guestEmail       String?       @map("guest_email")
+  guestPhone       String?       @map("guest_phone")
+  numberOfGuests   Int           @default(1) @map("number_of_guests")
+  status           BookingStatus @default(PENDIENTE)
+  confirmationCode String        @unique @map("confirmation_code")
+  source           String? // airbnb, booking, directo, etc.
+  notes            String?
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
   // Relations
-  property          Property      @relation(fields: [propertyId], references: [id])
-  propertyId        String        @map("property_id")
+  property   Property @relation(fields: [propertyId], references: [id])
+  propertyId String   @map("property_id")
 
-  propietario       Contact       @relation("BookingPropietario", fields: [propietarioId], references: [id])
-  propietarioId     String        @map("propietario_id")
+  propietario   Contact @relation("BookingPropietario", fields: [propietarioId], references: [id])
+  propietarioId String  @map("propietario_id")
 
-  guest             Contact?      @relation("BookingGuest", fields: [guestId], references: [id])
-  guestId           String?       @map("guest_id")
+  guest   Contact? @relation("BookingGuest", fields: [guestId], references: [id])
+  guestId String?  @map("guest_id")
 
   @@map("temporary_bookings")
 }
 
 model GeneratedDocument {
-  id            String   @id @default(cuid())
-  templateId    String   @map("template_id")      // ID del template usado (contrato_alquiler, etc.)
-  templateName  String   @map("template_name")
-  category      String                            // contratos, boletos, etc.
-  title         String                            // Título personalizado del documento
-  content       String   @db.Text                 // Contenido generado del documento
-  formData      Json?    @map("form_data")        // Datos del formulario usados
-  status        String   @default("borrador")     // borrador, finalizado, enviado
-  notes         String?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(cuid())
+  templateId   String   @map("template_id") // ID del template usado (contrato_alquiler, etc.)
+  templateName String   @map("template_name")
+  category     String // contratos, boletos, etc.
+  title        String // Título personalizado del documento
+  content      String   @db.Text // Contenido generado del documento
+  formData     Json?    @map("form_data") // Datos del formulario usados
+  status       String   @default("borrador") // borrador, finalizado, enviado
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
-  property      Property? @relation(fields: [propertyId], references: [id])
-  propertyId    String?   @map("property_id")
+  property   Property? @relation(fields: [propertyId], references: [id])
+  propertyId String?   @map("property_id")
 
-  createdBy     User?     @relation("DocumentCreatedBy", fields: [createdById], references: [id])
-  createdById   String?   @map("created_by_id")
+  createdBy   User?   @relation("DocumentCreatedBy", fields: [createdById], references: [id])
+  createdById String? @map("created_by_id")
 
   @@map("generated_documents")
 }
@@ -484,8 +505,8 @@ model Settings {
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Who last updated
-  updatedBy       User?    @relation("SettingsUpdatedBy", fields: [updatedById], references: [id])
-  updatedById     String?  @map("updated_by_id")
+  updatedBy   User?   @relation("SettingsUpdatedBy", fields: [updatedById], references: [id])
+  updatedById String? @map("updated_by_id")
 
   @@map("settings")
 }
@@ -503,17 +524,17 @@ model Task {
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
   // Relations
-  lead        Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  leadId      String?      @map("lead_id")
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId String? @map("lead_id")
 
-  property    Property?    @relation(fields: [propertyId], references: [id], onDelete: SetNull)
-  propertyId  String?      @map("property_id")
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  propertyId String?   @map("property_id")
 
-  assignedTo  User         @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
-  assignedToId String      @map("assigned_to_id")
+  assignedTo   User   @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  assignedToId String @map("assigned_to_id")
 
-  createdBy   User         @relation("TaskCreatedBy", fields: [createdById], references: [id])
-  createdById String       @map("created_by_id")
+  createdBy   User   @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  createdById String @map("created_by_id")
 
   @@map("tasks")
 }

@@ -173,7 +173,11 @@ router.get('/stats',
 /**
  * GET /api/leads/follow-ups/pending
  * Get pending follow-ups (for notifications)
- * Returns activities where followUpRequired=true and followUpDate <= today
+ * Returns two kinds of notifications:
+ *  - 'followup': activities where followUpRequired=true and followUpDate <= today
+ *  - 'stale':    open leads with no activity in the last 7 days (pending response
+ *                for a week). These are recomputed on each request, so they keep
+ *                reappearing week after week until the lead is contacted or closed.
  */
 router.get('/follow-ups/pending',
   authenticate,
@@ -183,6 +187,8 @@ router.get('/follow-ups/pending',
     const today = new Date();
     today.setHours(23, 59, 59, 999); // End of today
 
+    const canViewAll = req.permissions.canViewAllLeads;
+
     const where = {
       followUpRequired: true,
       followUpDate: {
@@ -191,41 +197,78 @@ router.get('/follow-ups/pending',
     };
 
     // VENDEDOR only sees follow-ups for their assigned leads
-    if (!req.permissions.canViewAllLeads) {
+    if (!canViewAll) {
       where.lead = {
         assignedToId: req.user.id
       };
     }
 
-    const followUps = await prisma.leadActivity.findMany({
-      where,
-      include: {
-        lead: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            assignedTo: {
-              select: { id: true, name: true }
+    // A lead is "stale" when it is still open and nobody has logged any activity
+    // (call, whatsapp, email, note, etc.) in the last 7 days, and it was created
+    // more than a week ago (so brand-new leads don't fire immediately).
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const staleWhere = {
+      stage: { notIn: ['CERRADO', 'PERDIDO'] },
+      createdAt: { lte: weekAgo },
+      activities: {
+        none: { date: { gte: weekAgo } }
+      }
+    };
+    if (!canViewAll) {
+      staleWhere.assignedToId = req.user.id;
+    }
+
+    const [followUps, staleLeads] = await Promise.all([
+      prisma.leadActivity.findMany({
+        where,
+        include: {
+          lead: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              assignedTo: {
+                select: { id: true, name: true }
+              }
             }
+          },
+          createdBy: {
+            select: { id: true, name: true }
           }
         },
-        createdBy: {
-          select: { id: true, name: true }
-        }
-      },
-      orderBy: { followUpDate: 'asc' },
-      take: 20
-    });
+        orderBy: { followUpDate: 'asc' },
+        take: 20
+      }),
+      prisma.lead.findMany({
+        where: staleWhere,
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          createdAt: true,
+          assignedTo: { select: { id: true, name: true } },
+          activities: {
+            orderBy: { date: 'desc' },
+            take: 1,
+            select: { date: true }
+          }
+        },
+        orderBy: { updatedAt: 'asc' },
+        take: 50
+      })
+    ]);
 
     // Mark which are overdue vs today using date-only comparison
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0]; // "2026-03-20"
 
-    const notifications = followUps.map(f => {
+    const followUpNotifications = followUps.map(f => {
       const followUpDateStr = new Date(f.followUpDate).toISOString().split('T')[0];
 
       return {
+        kind: 'followup',
         id: f.id,
         leadId: f.leadId,
         leadName: f.lead.name,
@@ -240,8 +283,29 @@ router.get('/follow-ups/pending',
       };
     });
 
+    const staleNotifications = staleLeads.map(lead => {
+      const lastContact = lead.activities[0]?.date || lead.createdAt;
+      const daysSince = Math.floor((now - new Date(lastContact)) / (1000 * 60 * 60 * 24));
+
+      return {
+        kind: 'stale',
+        id: `stale-${lead.id}`,
+        leadId: lead.id,
+        leadName: lead.name,
+        leadPhone: lead.phone,
+        lastContact,
+        daysSince,
+        isOverdue: true
+      };
+    });
+
+    // Stale leads first so the "pendiente hace una semana" alerts are most visible
+    const notifications = [...staleNotifications, ...followUpNotifications];
+
     res.json({
       total: notifications.length,
+      staleCount: staleNotifications.length,
+      followUpCount: followUpNotifications.length,
       notifications
     });
   })
@@ -308,11 +372,21 @@ router.post('/',
     body('email').optional({ values: 'falsy' }).isEmail().withMessage('Email inválido').normalizeEmail(),
     body('phone').optional().trim(),
     body('source').optional().isIn([
-      'REFERIDO', 'INSTAGRAM', 'FACEBOOK', 'LINKEDIN', 'GOOGLE', 'DIRECTO', 'OTRO'
+      'REFERIDO', 'INSTAGRAM', 'FACEBOOK', 'LINKEDIN', 'GOOGLE', 'DIRECTO', 'CARTELERIA', 'OTRO'
     ]).withMessage('Fuente inválida'),
     body('stage').optional().isIn([
       'NUEVO', 'EN_PROCESO', 'NEGOCIACION', 'CERRADO', 'PERDIDO'
     ]).withMessage('Etapa inválida'),
+    body('relation').optional().isIn([
+      'PROPIETARIO', 'CLIENTE', 'COLEGA'
+    ]).withMessage('Tipo de contacto inválido'),
+    body('operations').optional().isArray().withMessage('Operaciones debe ser un array'),
+    body('operations.*').optional().isIn([
+      'COMPRAVENTA', 'ALQUILER'
+    ]).withMessage('Operación inválida'),
+    body('priority').optional().isIn([
+      'ALTA', 'MEDIA', 'BAJA'
+    ]).withMessage('Prioridad inválida'),
     body('budgetMin').optional({ values: 'falsy' }),
     body('budgetMax').optional({ values: 'falsy' }),
     body('budgetCurrency').optional().isIn(['USD', 'ARS']).withMessage('Moneda inválida'),
@@ -330,6 +404,7 @@ router.post('/',
 
     const {
       name, email, phone, source, stage,
+      relation, operations, priority,
       budgetMin, budgetMax, budgetCurrency,
       interests, preferredZones, notes,
       propertyId, assignedToId
@@ -350,6 +425,9 @@ router.post('/',
         phone,
         source: source || 'REFERIDO',
         stage: stage || 'NUEVO',
+        relation: relation || 'CLIENTE',
+        operations: operations || [],
+        priority: priority || 'MEDIA',
         budgetMin: budgetMin ? parseFloat(budgetMin) : null,
         budgetMax: budgetMax ? parseFloat(budgetMax) : null,
         budgetCurrency: budgetCurrency || 'USD',
@@ -392,11 +470,21 @@ router.put('/:id',
     body('email').optional().isEmail().withMessage('Email inválido').normalizeEmail(),
     body('phone').optional().trim(),
     body('source').optional().isIn([
-      'REFERIDO', 'INSTAGRAM', 'FACEBOOK', 'LINKEDIN', 'GOOGLE', 'DIRECTO', 'OTRO'
+      'REFERIDO', 'INSTAGRAM', 'FACEBOOK', 'LINKEDIN', 'GOOGLE', 'DIRECTO', 'CARTELERIA', 'OTRO'
     ]).withMessage('Fuente inválida'),
     body('stage').optional().isIn([
       'NUEVO', 'EN_PROCESO', 'NEGOCIACION', 'CERRADO', 'PERDIDO'
     ]).withMessage('Etapa inválida'),
+    body('relation').optional().isIn([
+      'PROPIETARIO', 'CLIENTE', 'COLEGA'
+    ]).withMessage('Tipo de contacto inválido'),
+    body('operations').optional().isArray().withMessage('Operaciones debe ser un array'),
+    body('operations.*').optional().isIn([
+      'COMPRAVENTA', 'ALQUILER'
+    ]).withMessage('Operación inválida'),
+    body('priority').optional().isIn([
+      'ALTA', 'MEDIA', 'BAJA'
+    ]).withMessage('Prioridad inválida'),
     body('score').optional().isInt({ min: 0, max: 100 }).withMessage('Score debe ser entre 0 y 100'),
     body('assignedToId').optional().isString()
   ],
@@ -424,6 +512,7 @@ router.put('/:id',
 
     const {
       name, email, phone, source, stage, score,
+      relation, operations, priority,
       budgetMin, budgetMax, budgetCurrency,
       interests, preferredZones, notes,
       propertyId, assignedToId, lostReason, closedDate, closedAmount
@@ -435,6 +524,9 @@ router.put('/:id',
     if (phone !== undefined) updateData.phone = phone;
     if (source !== undefined) updateData.source = source;
     if (stage !== undefined) updateData.stage = stage;
+    if (relation !== undefined) updateData.relation = relation;
+    if (operations !== undefined) updateData.operations = operations;
+    if (priority !== undefined) updateData.priority = priority;
     if (score !== undefined) updateData.score = score;
     if (budgetMin !== undefined) updateData.budgetMin = budgetMin ? parseFloat(budgetMin) : null;
     if (budgetMax !== undefined) updateData.budgetMax = budgetMax ? parseFloat(budgetMax) : null;

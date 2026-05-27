@@ -385,6 +385,27 @@ const Panels = {
           </div>
         </div>
 
+        <!-- Clasificación -->
+        <div class="panel__section">
+          <h3 class="panel__section-title">Clasificación</h3>
+          <div class="info-row">
+            <span class="info-row__label">Tipo de contacto</span>
+            <span class="info-row__value">${({ cliente: 'Cliente', propietario: 'Propietario', colega: 'Colega' })[lead.relation] || 'Cliente'}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-row__label">Prioridad</span>
+            <span class="info-row__value">${({ alta: 'Alta', media: 'Media', baja: 'Baja' })[lead.priority] || 'Media'}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-row__label">Operación</span>
+            <span class="info-row__value">${(lead.operations || []).map(o => ({ compraventa: 'Compra/Venta', alquiler: 'Alquiler' })[o] || o).join(', ') || 'No especificada'}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-row__label">Fuente</span>
+            <span class="info-row__value" style="text-transform: capitalize;">${(lead.source || '').replace('carteleria', 'cartelería') || 'No especificada'}</span>
+          </div>
+        </div>
+
         <!-- Property Interest -->
         ${lead.property ? `
           <div class="panel__section">

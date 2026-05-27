@@ -1177,42 +1177,72 @@ const Modals = {
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Nombre Completo</label>
-            <input type="text" class="form-input" placeholder="Nombre y apellido">
+            <input type="text" class="form-input" id="new-lead-name" placeholder="Nombre y apellido">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Email</label>
-            <input type="email" class="form-input" placeholder="email@ejemplo.com">
+            <input type="email" class="form-input" id="new-lead-email" placeholder="email@ejemplo.com">
           </div>
           <div class="form-group">
             <label class="form-label">Teléfono</label>
-            <input type="tel" class="form-input" placeholder="+54 9 11 1234-5678">
+            <input type="tel" class="form-input" id="new-lead-phone" placeholder="+54 9 11 1234-5678">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Fuente</label>
-            <select class="form-select">
+            <select class="form-select" id="new-lead-source">
               <option value="referido">Referido</option>
               <option value="instagram">Instagram</option>
               <option value="facebook">Facebook</option>
               <option value="google">Google</option>
               <option value="directo">Directo</option>
+              <option value="carteleria">Cartelería</option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label">Asignar a</label>
-            <select class="form-select">
+            <select class="form-select" id="new-lead-agent">
               ${DataStore.users.filter(u => u.role === 'agente').map(u => `
                 <option value="${u.id}">${u.name}</option>
               `).join('')}
             </select>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tipo de contacto</label>
+            <select class="form-select" id="new-lead-relation">
+              <option value="cliente">Cliente</option>
+              <option value="propietario">Propietario</option>
+              <option value="colega">Colega</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prioridad</label>
+            <select class="form-select" id="new-lead-priority">
+              <option value="alta">Alta</option>
+              <option value="media" selected>Media</option>
+              <option value="baja">Baja</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Operación</label>
+          <div class="form-checkbox-group">
+            <label class="form-checkbox">
+              <input type="checkbox" id="new-lead-op-compraventa" value="compraventa"> Compra/Venta
+            </label>
+            <label class="form-checkbox">
+              <input type="checkbox" id="new-lead-op-alquiler" value="alquiler"> Alquiler
+            </label>
+          </div>
+        </div>
         <div class="form-group">
           <label class="form-label">Propiedad de Interés</label>
-          <select class="form-select">
+          <select class="form-select" id="new-lead-property">
             <option value="">Seleccionar propiedad...</option>
             ${DataStore.properties.map(p => `
               <option value="${p.id}">${p.title} - ${p.neighborhood}</option>
@@ -1222,16 +1252,16 @@ const Modals = {
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Presupuesto Mínimo</label>
-            <input type="number" class="form-input" placeholder="0">
+            <input type="number" class="form-input" id="new-lead-budget-min" placeholder="0">
           </div>
           <div class="form-group">
             <label class="form-label">Presupuesto Máximo</label>
-            <input type="number" class="form-input" placeholder="0">
+            <input type="number" class="form-input" id="new-lead-budget-max" placeholder="0">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Notas</label>
-          <textarea class="form-textarea" rows="3" placeholder="Notas adicionales..."></textarea>
+          <textarea class="form-textarea" id="new-lead-notes" rows="3" placeholder="Notas adicionales..."></textarea>
         </div>
       </div>
       <div class="modal__footer">
@@ -1246,17 +1276,14 @@ const Modals = {
     document.getElementById('modal-close')?.addEventListener('click', () => this.close());
     document.getElementById('modal-cancel')?.addEventListener('click', () => this.close());
     document.getElementById('modal-save')?.addEventListener('click', async () => {
-      const inputs = document.querySelectorAll('.modal .form-input, .modal .form-select, .modal .form-textarea');
-      const [nameInput, emailInput, phoneInput, sourceSelect, assignedSelect, propertySelect, budgetMinInput, budgetMaxInput, notesTextarea] = inputs;
-
-      const name = nameInput?.value?.trim();
+      const name = document.getElementById('new-lead-name')?.value?.trim();
       if (!name) {
         Toast.show('error', 'Campo requerido', 'El nombre es requerido');
         return;
       }
 
       // Email validation (optional but must be valid if provided)
-      const email = emailInput?.value?.trim();
+      const email = document.getElementById('new-lead-email')?.value?.trim();
       if (email) {
         const emailValidation = FormValidation.validateEmail(email);
         if (!emailValidation.isValid) {
@@ -1266,8 +1293,10 @@ const Modals = {
       }
 
       // Budget validation (min must be less than max)
-      const budgetMin = budgetMinInput?.value ? parseFloat(budgetMinInput.value) : null;
-      const budgetMax = budgetMaxInput?.value ? parseFloat(budgetMaxInput.value) : null;
+      const budgetMinRaw = document.getElementById('new-lead-budget-min')?.value;
+      const budgetMaxRaw = document.getElementById('new-lead-budget-max')?.value;
+      const budgetMin = budgetMinRaw ? parseFloat(budgetMinRaw) : null;
+      const budgetMax = budgetMaxRaw ? parseFloat(budgetMaxRaw) : null;
 
       if (budgetMin !== null && budgetMax !== null) {
         const budgetValidation = FormValidation.validateBudgetRange(budgetMin, budgetMax);
@@ -1277,16 +1306,23 @@ const Modals = {
         }
       }
 
+      const operations = [];
+      if (document.getElementById('new-lead-op-compraventa')?.checked) operations.push('compraventa');
+      if (document.getElementById('new-lead-op-alquiler')?.checked) operations.push('alquiler');
+
       const leadData = {
         name,
         email: email || null,
-        phone: phoneInput?.value?.trim() || null,
-        source: sourceSelect?.value || 'referido',
-        assignedTo: assignedSelect?.value || null,
-        property: propertySelect?.value || null,
+        phone: document.getElementById('new-lead-phone')?.value?.trim() || null,
+        source: document.getElementById('new-lead-source')?.value || 'referido',
+        relation: document.getElementById('new-lead-relation')?.value || 'cliente',
+        priority: document.getElementById('new-lead-priority')?.value || 'media',
+        operations,
+        assignedTo: document.getElementById('new-lead-agent')?.value || null,
+        property: document.getElementById('new-lead-property')?.value || null,
         budgetMin: budgetMin,
         budgetMax: budgetMax,
-        notes: notesTextarea?.value?.trim() || null
+        notes: document.getElementById('new-lead-notes')?.value?.trim() || null
       };
 
       const saveBtn = document.getElementById('modal-save');
@@ -1366,6 +1402,7 @@ const Modals = {
               <option value="google" ${lead.source === 'google' ? 'selected' : ''}>Google</option>
               <option value="linkedin" ${lead.source === 'linkedin' ? 'selected' : ''}>LinkedIn</option>
               <option value="directo" ${lead.source === 'directo' ? 'selected' : ''}>Directo</option>
+              <option value="carteleria" ${lead.source === 'carteleria' ? 'selected' : ''}>Cartelería</option>
             </select>
           </div>
           <div class="form-group">
@@ -1375,6 +1412,35 @@ const Modals = {
                 <option value="${s.id}" ${lead.stage === s.id ? 'selected' : ''}>${s.name}</option>
               `).join('')}
             </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tipo de contacto</label>
+            <select class="form-select" id="edit-lead-relation">
+              <option value="cliente" ${lead.relation === 'cliente' ? 'selected' : ''}>Cliente</option>
+              <option value="propietario" ${lead.relation === 'propietario' ? 'selected' : ''}>Propietario</option>
+              <option value="colega" ${lead.relation === 'colega' ? 'selected' : ''}>Colega</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prioridad</label>
+            <select class="form-select" id="edit-lead-priority">
+              <option value="alta" ${lead.priority === 'alta' ? 'selected' : ''}>Alta</option>
+              <option value="media" ${lead.priority === 'media' || !lead.priority ? 'selected' : ''}>Media</option>
+              <option value="baja" ${lead.priority === 'baja' ? 'selected' : ''}>Baja</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Operación</label>
+          <div class="form-checkbox-group">
+            <label class="form-checkbox">
+              <input type="checkbox" id="edit-lead-op-compraventa" value="compraventa" ${lead.operations?.includes('compraventa') ? 'checked' : ''}> Compra/Venta
+            </label>
+            <label class="form-checkbox">
+              <input type="checkbox" id="edit-lead-op-alquiler" value="alquiler" ${lead.operations?.includes('alquiler') ? 'checked' : ''}> Alquiler
+            </label>
           </div>
         </div>
         <div class="form-row">
@@ -1448,12 +1514,19 @@ const Modals = {
       const propertyId = document.getElementById('edit-lead-property')?.value;
       const property = propertyId ? DataStore.getPropertyById(propertyId) : null;
 
+      const operations = [];
+      if (document.getElementById('edit-lead-op-compraventa')?.checked) operations.push('compraventa');
+      if (document.getElementById('edit-lead-op-alquiler')?.checked) operations.push('alquiler');
+
       const updates = {
         name,
         email: document.getElementById('edit-lead-email')?.value?.trim() || null,
         phone: document.getElementById('edit-lead-phone')?.value?.trim() || null,
         source: document.getElementById('edit-lead-source')?.value,
         stage: document.getElementById('edit-lead-stage')?.value,
+        relation: document.getElementById('edit-lead-relation')?.value,
+        priority: document.getElementById('edit-lead-priority')?.value,
+        operations,
         assignedTo: document.getElementById('edit-lead-agent')?.value,
         score: parseInt(document.getElementById('edit-lead-score')?.value) || 0,
         property: propertyId || null,

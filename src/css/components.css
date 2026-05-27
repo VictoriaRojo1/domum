@@ -2268,11 +2268,22 @@
   margin-bottom: var(--spacing-md);
 }
 
+/* Form checkbox group (e.g. lead operations) */
+.form-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  padding-top: var(--spacing-xs);
+}
+
 /* Form checkbox style */
 .form-checkbox {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  cursor: pointer;
 }
 
 .form-checkbox input[type="checkbox"] {

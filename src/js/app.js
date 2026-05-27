@@ -2211,16 +2211,37 @@ const App = {
       'seguimiento': 'refresh-cw'
     };
 
+    const formatDate = (value) => {
+      const d = new Date(value);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      return `${day}-${month}-${d.getFullYear()}`;
+    };
+
     listContainer.innerHTML = this.notifications.map(n => {
+      // Stale leads: pending response for a week or more
+      if (n.kind === 'stale') {
+        const lastContactStr = n.lastContact ? formatDate(n.lastContact) : '—';
+        return `
+          <div class="notification-item" data-lead-id="${n.leadId}">
+            <div class="notification-item__icon notification-item__icon--stale">
+              <i data-lucide="clock-alert"></i>
+            </div>
+            <div class="notification-item__content">
+              <div class="notification-item__lead">${n.leadName}</div>
+              <div class="notification-item__type">Sin respuesta hace ${n.daysSince} días · Último contacto: ${lastContactStr}</div>
+            </div>
+            <div class="notification-item__date notification-item__date--overdue">
+              ⏰ Pendiente
+            </div>
+          </div>
+        `;
+      }
+
       const statusClass = n.isOverdue ? 'overdue' : 'today';
       const icon = typeIcons[n.type] || 'bell';
       const typeLabel = typeLabels[n.type] || n.type;
-
-      const followUpDate = new Date(n.followUpDate);
-      const day = String(followUpDate.getDate()).padStart(2, '0');
-      const month = String(followUpDate.getMonth() + 1).padStart(2, '0');
-      const year = followUpDate.getFullYear();
-      const formattedDate = `${day}-${month}-${year}`;
+      const formattedDate = formatDate(n.followUpDate);
 
       return `
         <div class="notification-item" data-lead-id="${n.leadId}">

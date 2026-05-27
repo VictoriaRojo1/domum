@@ -59,6 +59,7 @@ const API = {
       'linkedin': 'LINKEDIN',
       'google': 'GOOGLE',
       'directo': 'DIRECTO',
+      'carteleria': 'CARTELERIA',
       'otro': 'OTRO'
     };
     return mapping[frontendSource] || 'REFERIDO';
@@ -66,6 +67,32 @@ const API = {
 
   sourceToFrontend(backendSource) {
     return backendSource ? backendSource.toLowerCase() : 'referido';
+  },
+
+  // Lead relation (Propietario / Cliente / Colega)
+  relationToBackend(value) {
+    return value ? value.toUpperCase() : 'CLIENTE';
+  },
+  relationToFrontend(value) {
+    return value ? value.toLowerCase() : 'cliente';
+  },
+
+  // Lead priority (Alta / Media / Baja)
+  priorityToBackend(value) {
+    return value ? value.toUpperCase() : 'MEDIA';
+  },
+  priorityToFrontend(value) {
+    return value ? value.toLowerCase() : 'media';
+  },
+
+  // Lead operations (Compraventa / Alquiler) - array
+  operationsToBackend(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr.map(o => o.toUpperCase());
+  },
+  operationsToFrontend(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr.map(o => o.toLowerCase());
   },
 
   // =============================================
@@ -279,11 +306,11 @@ const API = {
     const response = await this.request('/leads/follow-ups/pending');
 
     if (response.success && response.notifications) {
-      // Transform activity types to frontend format
-      response.notifications = response.notifications.map(n => ({
-        ...n,
-        type: this.activityTypeToFrontend(n.type)
-      }));
+      // Transform activity types to frontend format (only follow-up items have a type;
+      // 'stale' lead notifications don't carry an activity type).
+      response.notifications = response.notifications.map(n =>
+        n.type ? { ...n, type: this.activityTypeToFrontend(n.type) } : n
+      );
     }
 
     return response;
@@ -484,6 +511,9 @@ const API = {
       ...lead,
       stage: this.stageToFrontend(lead.stage),
       source: this.sourceToFrontend(lead.source),
+      relation: this.relationToFrontend(lead.relation),
+      priority: this.priorityToFrontend(lead.priority),
+      operations: this.operationsToFrontend(lead.operations),
       // Map backend relations to frontend format
       assignedTo: lead.assignedToId,
       agent: lead.assignedTo ? {
@@ -507,6 +537,17 @@ const API = {
     // Transform source if present
     if (data.source) {
       backendData.source = this.sourceToBackend(data.source);
+    }
+
+    // Transform new classification fields if present
+    if (data.relation) {
+      backendData.relation = this.relationToBackend(data.relation);
+    }
+    if (data.priority) {
+      backendData.priority = this.priorityToBackend(data.priority);
+    }
+    if (data.operations !== undefined) {
+      backendData.operations = this.operationsToBackend(data.operations);
     }
 
     // Map frontend field names to backend field names

@@ -162,6 +162,19 @@ const Components = {
     const initials = Utils.getInitials(lead.name);
     const property = lead.property ? lead.property.title : 'Sin propiedad asignada';
 
+    // Priority badge (defaults to media)
+    const priority = lead.priority || 'media';
+    const priorityLabels = { alta: 'Alta', media: 'Media', baja: 'Baja' };
+    const priorityHtml = `<span class="lead-card__priority lead-card__priority--${priority}">${priorityLabels[priority] || 'Media'}</span>`;
+
+    // Relation + operations tags
+    const relationLabels = { cliente: 'Cliente', propietario: 'Propietario', colega: 'Colega' };
+    const opLabels = { compraventa: 'Compra/Venta', alquiler: 'Alquiler' };
+    const tags = [];
+    if (lead.relation) tags.push(`<span class="lead-card__tag">${relationLabels[lead.relation] || lead.relation}</span>`);
+    (lead.operations || []).forEach(op => tags.push(`<span class="lead-card__tag lead-card__tag--op">${opLabels[op] || op}</span>`));
+    const tagsHtml = tags.length ? `<div class="lead-card__tags">${tags.join('')}</div>` : '';
+
     // Generate follow-up HTML if exists
     let followUpHtml = '';
     if (lead.followUp) {
@@ -205,8 +218,12 @@ const Components = {
             <span class="lead-card__name">${lead.name}</span>
             <span class="lead-card__source">${lead.source}</span>
           </div>
-          <div class="lead-card__score">${lead.score}</div>
+          <div class="lead-card__meta">
+            ${priorityHtml}
+            <div class="lead-card__score">${lead.score}</div>
+          </div>
         </div>
+        ${tagsHtml}
         <p class="lead-card__property">
           <i data-lucide="home"></i>
           ${Utils.truncate(property, 35)}
