@@ -23,6 +23,10 @@ const { errorHandler } = require('./middleware/error.middleware');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust the first proxy (Vercel) so X-Forwarded-For is honored.
+// Required for express-rate-limit to read the real client IP behind the proxy.
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
