@@ -224,8 +224,8 @@ const Pages = {
               <input type="text" class="search-input" id="crm-search" placeholder="Buscar lead...">
             </div>
             <select class="form-select" id="filter-agent">
-              <option value="">Todos los agentes</option>
-              ${DataStore.users.filter(u => u.role === 'agente').map(u => `
+              <option value="">Todos los usuarios</option>
+              ${DataStore.users.filter(u => u.status === 'activo').map(u => `
                 <option value="${u.id}">${u.name}</option>
               `).join('')}
             </select>

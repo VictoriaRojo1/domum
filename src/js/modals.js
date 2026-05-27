@@ -1205,7 +1205,8 @@ const Modals = {
           <div class="form-group">
             <label class="form-label">Asignar a</label>
             <select class="form-select" id="new-lead-agent">
-              ${DataStore.users.filter(u => u.role === 'agente').map(u => `
+              <option value="">Sin asignar</option>
+              ${DataStore.users.filter(u => u.status === 'activo').map(u => `
                 <option value="${u.id}">${u.name}</option>
               `).join('')}
             </select>
@@ -1447,7 +1448,7 @@ const Modals = {
           <div class="form-group">
             <label class="form-label">Asignar a</label>
             <select class="form-select" id="edit-lead-agent">
-              ${DataStore.users.filter(u => u.role === 'agente').map(u => `
+              ${DataStore.users.filter(u => u.status === 'activo').map(u => `
                 <option value="${u.id}" ${lead.assignedTo === u.id ? 'selected' : ''}>${u.name}</option>
               `).join('')}
             </select>
@@ -3646,7 +3647,7 @@ const Modals = {
   newTask(options = {}) {
     const { leadId, propertyId } = options;
     const leads = DataStore.getLeads();
-    const users = DataStore.users.filter(u => u.role === 'agente' || u.role === 'administrador');
+    const users = DataStore.users.filter(u => u.status === 'activo');
 
     // Get tomorrow's date as default
     const tomorrow = new Date();
@@ -3782,7 +3783,7 @@ const Modals = {
     }
 
     const leads = DataStore.getLeads();
-    const users = DataStore.users.filter(u => u.role === 'agente' || u.role === 'administrador');
+    const users = DataStore.users.filter(u => u.status === 'activo');
 
     const content = `
       <div class="modal__header">
