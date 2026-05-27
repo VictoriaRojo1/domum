@@ -228,6 +228,10 @@ const Components = {
           <i data-lucide="home"></i>
           ${Utils.truncate(property, 35)}
         </p>
+        <p class="lead-card__assigned">
+          <i data-lucide="user"></i>
+          ${lead.agent?.name || 'Sin asignar'}
+        </p>
         ${lead.nextAction ? `
           <div class="lead-card__action">
             <i data-lucide="clock"></i>
@@ -342,91 +346,6 @@ const Components = {
           ${dayEvents.length > 3 ? `
             <span class="calendar-day__more">+${dayEvents.length - 3} más</span>
           ` : ''}
-        </div>
-      </div>
-    `;
-  },
-
-  // Activity Item (for timeline) - Enhanced version
-  activityItem(activity) {
-    const typeInfo = DataStore.getActivityTypeInfo ?
-      DataStore.getActivityTypeInfo(activity.type) :
-      { icon: 'activity', name: activity.type };
-
-    const outcomeInfo = DataStore.getActivityOutcomeInfo && activity.outcome ?
-      DataStore.getActivityOutcomeInfo(activity.outcome) :
-      null;
-
-    const showOutcome = outcomeInfo && activity.outcome !== 'no_aplica';
-    const showDuration = activity.duration && activity.duration > 0;
-    const showNotes = activity.notes && activity.notes.trim();
-
-    return `
-      <div class="timeline-item--enhanced">
-        <div class="timeline-item__icon timeline-item__icon--${activity.type}">
-          <i data-lucide="${typeInfo.icon}"></i>
-        </div>
-        <div class="timeline-item__content">
-          <div class="timeline-item__header">
-            <span class="timeline-item__type">${typeInfo.name}</span>
-            <span class="timeline-item__date">${Utils.formatDate(activity.date, 'relative')}</span>
-          </div>
-          ${activity.subject ? `
-            <div style="font-size: var(--font-size-sm); color: var(--text-primary); margin-top: 2px;">
-              ${activity.subject}
-            </div>
-          ` : ''}
-          ${showOutcome ? `
-            <span class="timeline-item__outcome timeline-item__outcome--${activity.outcome}">
-              ${outcomeInfo.name}
-            </span>
-          ` : ''}
-          ${showNotes ? `
-            <p class="timeline-item__notes">${activity.notes}</p>
-          ` : ''}
-          ${showDuration ? `
-            <div class="timeline-item__duration">
-              <i data-lucide="clock"></i>
-              ${activity.duration} min
-            </div>
-          ` : ''}
-          ${activity.createdBy ? `
-            <div class="timeline-item__agent">
-              <i data-lucide="user"></i>
-              ${activity.createdBy.name}
-            </div>
-          ` : ''}
-        </div>
-      </div>
-    `;
-  },
-
-  // Legacy activity item (simpler version)
-  activityItemSimple(activity) {
-    const icons = {
-      visita: 'map-pin',
-      llamada: 'phone',
-      llamada_entrante: 'phone-incoming',
-      llamada_saliente: 'phone-outgoing',
-      email: 'mail',
-      mensaje: 'message-circle',
-      whatsapp: 'message-circle',
-      reunion: 'users',
-      oferta: 'file-text',
-      nota: 'file-text',
-      seña: 'hand-coins',
-      formulario: 'clipboard',
-      seguimiento: 'refresh-cw'
-    };
-
-    return `
-      <div class="activity-item">
-        <div class="activity-item__icon">
-          <i data-lucide="${icons[activity.type] || 'circle'}"></i>
-        </div>
-        <div class="activity-item__content">
-          <span class="activity-item__title">${activity.notes || activity.subject || DataStore.getActivityTypeInfo(activity.type)?.name || activity.type}</span>
-          <span class="activity-item__time">${Utils.formatDate(activity.date, 'relative')}</span>
         </div>
       </div>
     `;

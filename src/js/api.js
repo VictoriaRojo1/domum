@@ -403,23 +403,6 @@ const API = {
   // LEAD ACTIVITIES ENDPOINTS
   // =============================================
 
-  async getLeadActivities(leadId, filters = {}) {
-    const params = new URLSearchParams();
-    if (filters.type) params.append('type', this.activityTypeToBackend(filters.type));
-    if (filters.outcome) params.append('outcome', this.activityOutcomeToBackend(filters.outcome));
-    if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
-
-    const queryString = params.toString();
-    const response = await this.request(`/leads/${leadId}/activities${queryString ? `?${queryString}` : ''}`);
-
-    if (response.success && response.activities) {
-      response.activities = response.activities.map(a => this.transformActivityToFrontend(a));
-    }
-
-    return response;
-  },
-
   async addLeadActivity(leadId, activity) {
     const backendData = this.transformActivityToBackend(activity);
 

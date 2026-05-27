@@ -335,6 +335,9 @@ const Panels = {
     }
 
     const agent = DataStore.getUserById(lead.assignedTo);
+    // Only ADMIN/SUPERADMIN can reassign leads (backend enforces this too)
+    const canReassign = ['superadmin', 'administrador'].includes(DataStore.currentUser?.role);
+    const assignableUsers = DataStore.users.filter(u => u.status === 'activo');
     const stage = DataStore.leadStages.find(s => s.id === lead.stage);
     const property = lead.property ? DataStore.getPropertyById(lead.property.id) : null;
     const propertyImage = property ? Components.getPropertyImage(property) : null;
@@ -485,48 +488,6 @@ const Panels = {
           </div>
         ` : ''}
 
-        <!-- Registrar Actividad -->
-        <div class="panel__section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <h3 class="panel__section-title" style="margin-bottom: 0;">Registrar Actividad</h3>
-            <button class="btn btn--ghost btn--sm" id="toggle-activity-form">
-              <i data-lucide="plus"></i>
-              Agregar
-            </button>
-          </div>
-          <div class="add-activity-form" id="add-activity-form" style="display: none;">
-            <textarea class="form-textarea" id="new-activity-text" rows="3" placeholder="Describe la actividad realizada..."></textarea>
-            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
-              <button class="btn btn--ghost btn--sm" id="cancel-activity">Cancelar</button>
-              <button class="btn btn--primary btn--sm" id="save-activity">Guardar</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Activity Timeline -->
-        <div class="panel__section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <h3 class="panel__section-title" style="margin-bottom: 0;">Historial de Actividades</h3>
-            <span style="font-size: var(--font-size-xs); color: var(--text-tertiary);">
-              ${lead.activities?.length || 0} ${(lead.activities?.length || 0) === 1 ? 'actividad' : 'actividades'}
-            </span>
-          </div>
-          ${lead.activities && lead.activities.length > 0 ? `
-            <div class="timeline--enhanced">
-              ${lead.activities.slice(0, 10).map(a => Components.activityItem(a)).join('')}
-            </div>
-            ${lead.activities.length > 10 ? `
-              <button class="btn btn--ghost btn--sm" style="width: 100%; margin-top: var(--spacing-sm);" id="load-more-activities">
-                Ver todas las actividades (${lead.activities.length})
-              </button>
-            ` : ''}
-          ` : `
-            <p style="color: var(--text-tertiary); font-size: var(--font-size-sm); font-style: italic; text-align: center; padding: var(--spacing-md);">
-              Sin actividades registradas
-            </p>
-          `}
-        </div>
-
         <!-- Notes Section -->
         <div class="panel__section">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
@@ -556,9 +517,16 @@ const Panels = {
         </div>
 
         <!-- Agent -->
-        ${agent ? `
-          <div class="panel__section">
-            <h3 class="panel__section-title">Asignado a</h3>
+        <div class="panel__section">
+          <h3 class="panel__section-title">Asignado a</h3>
+          ${canReassign ? `
+            <select class="form-select" id="reassign-lead">
+              ${!lead.assignedTo ? '<option value="" selected>Sin asignar</option>' : ''}
+              ${assignableUsers.map(u => `
+                <option value="${u.id}" ${u.id === lead.assignedTo ? 'selected' : ''}>${u.name}</option>
+              `).join('')}
+            </select>
+          ` : agent ? `
             <div style="display: flex; align-items: center; gap: 0.75rem;">
               <div class="user-avatar">${agent.avatar}</div>
               <div>
@@ -566,6 +534,18 @@ const Panels = {
                 <span style="font-size: var(--font-size-sm); color: var(--text-secondary);">${agent.email}</span>
               </div>
             </div>
+          ` : `
+            <span style="font-size: var(--font-size-sm); color: var(--text-tertiary); font-style: italic;">Sin asignar</span>
+          `}
+        </div>
+
+        <!-- Marcar como Perdido -->
+        ${lead.stage !== 'perdido' ? `
+          <div class="panel__section">
+            <button class="btn btn--danger" id="mark-lead-lost" style="width: 100%;">
+              <i data-lucide="x-circle"></i>
+              Marcar como Perdido
+            </button>
           </div>
         ` : ''}
       </div>
@@ -613,6 +593,53 @@ const Panels = {
         }
       });
     });
+
+    // Mark as Lost button
+    const markLostBtn = document.getElementById('mark-lead-lost');
+    if (markLostBtn) {
+      markLostBtn.addEventListener('click', () => {
+        Modals.markLeadLost({
+          leadName: lead?.name,
+          onConfirm: async (reason) => {
+            try {
+              await DataStore.updateLeadViaAPI(leadId, {
+                stage: 'perdido',
+                lostReason: reason || null
+              });
+              Toast.show('success', 'Lead marcado como Perdido', 'Movido a Archivados');
+              this.close();
+              if (typeof App !== 'undefined') {
+                await DataStore.loadLeadsFromAPI();
+                if (App.currentPage === 'crm') App.navigate('crm');
+              }
+            } catch (error) {
+              Toast.show('error', 'Error', error.message || 'No se pudo marcar como perdido');
+            }
+          }
+        });
+      });
+    }
+
+    // Reassign lead
+    const reassignSelect = document.getElementById('reassign-lead');
+    if (reassignSelect) {
+      reassignSelect.addEventListener('change', async () => {
+        const newUserId = reassignSelect.value;
+        if (!newUserId || newUserId === lead.assignedTo) return;
+        try {
+          await DataStore.updateLeadViaAPI(leadId, { assignedTo: newUserId });
+          const newUser = DataStore.getUserById(newUserId);
+          Toast.show('success', 'Lead reasignado', `Asignado a ${newUser?.name || 'usuario'}`);
+          if (typeof App !== 'undefined' && App.currentPage === 'crm') {
+            App.renderCRMPipeline();
+          }
+        } catch (error) {
+          // Revert the select to the previous value on failure
+          reassignSelect.value = lead.assignedTo || '';
+          Toast.show('error', 'Error', error.message || 'No se pudo reasignar el lead');
+        }
+      });
+    }
 
     // Editable fields (click to edit)
     document.querySelectorAll('.info-row--editable').forEach(row => {
@@ -794,63 +821,6 @@ const Panels = {
     // Add Task button
     document.getElementById('add-lead-task')?.addEventListener('click', () => {
       Modals.quickTask(leadId);
-    });
-
-    // Toggle activity form
-    const activityForm = document.getElementById('add-activity-form');
-    const toggleActivityBtn = document.getElementById('toggle-activity-form');
-    const cancelActivityBtn = document.getElementById('cancel-activity');
-    const saveActivityBtn = document.getElementById('save-activity');
-    const activityTextarea = document.getElementById('new-activity-text');
-
-    toggleActivityBtn?.addEventListener('click', () => {
-      activityForm.style.display = activityForm.style.display === 'none' ? 'block' : 'none';
-      if (activityForm.style.display === 'block') {
-        activityTextarea.focus();
-      }
-    });
-
-    cancelActivityBtn?.addEventListener('click', () => {
-      activityForm.style.display = 'none';
-      activityTextarea.value = '';
-    });
-
-    saveActivityBtn?.addEventListener('click', async () => {
-      const description = activityTextarea.value.trim();
-      if (description) {
-        try {
-          await DataStore.addLeadActivityViaAPI(leadId, {
-            type: 'nota',
-            description: description
-          });
-          Toast.show('success', 'Actividad registrada');
-          activityForm.style.display = 'none';
-          activityTextarea.value = '';
-
-          // Refresh panel to show new activity
-          this.close();
-          setTimeout(() => this.lead(leadId), 100);
-        } catch (error) {
-          Toast.show('error', 'Error', error.message);
-        }
-      }
-    });
-
-    // Load more activities button
-    document.getElementById('load-more-activities')?.addEventListener('click', async () => {
-      try {
-        const activities = await DataStore.getLeadActivitiesViaAPI(leadId, { limit: 100 });
-        // Re-render timeline with all activities
-        const timeline = document.querySelector('.timeline--enhanced');
-        if (timeline && activities) {
-          timeline.innerHTML = activities.map(a => Components.activityItem(a)).join('');
-          lucide.createIcons();
-        }
-        // Remove the button
-        document.getElementById('load-more-activities')?.remove();
-      } catch (error) {
-        Toast.show('error', 'Error', 'No se pudieron cargar las actividades');
-      }
     });
 
     // Load tasks for this lead

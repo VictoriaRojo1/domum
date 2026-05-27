@@ -1841,16 +1841,6 @@ const DataStore = {
   // LEAD ACTIVITIES (API Integration)
   // =============================================
 
-  async getLeadActivitiesViaAPI(leadId, filters = {}) {
-    const response = await API.getLeadActivities(leadId, filters);
-
-    if (response.success && response.activities) {
-      return response.activities;
-    }
-
-    throw new Error(response.error || 'Error al obtener actividades');
-  },
-
   async addLeadActivityViaAPI(leadId, activityData) {
     const response = await API.addLeadActivity(leadId, activityData);
 

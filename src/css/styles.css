@@ -1870,6 +1870,20 @@ img {
   height: 12px;
 }
 
+.lead-card__assigned {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.lead-card__assigned i {
+  width: 12px;
+  height: 12px;
+}
+
 .lead-card__action {
   display: flex;
   align-items: center;

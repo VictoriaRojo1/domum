@@ -210,7 +210,7 @@ router.get('/follow-ups/pending',
     weekAgo.setDate(weekAgo.getDate() - 7);
 
     const staleWhere = {
-      stage: { notIn: ['CERRADO', 'PERDIDO'] },
+      stage: { not: 'CERRADO' },
       createdAt: { lte: weekAgo },
       activities: {
         none: { date: { gte: weekAgo } }

@@ -189,6 +189,41 @@ const Modals = {
     });
   },
 
+  // Mark Lead as Lost Modal (captures an optional reason)
+  markLeadLost(options) {
+    const { leadName = '', onConfirm } = options;
+
+    const content = `
+      <div class="modal__body" style="padding: 2rem;">
+        <div class="confirm-modal__icon confirm-modal__icon--danger" style="margin: 0 auto 1rem;">
+          <i data-lucide="x-circle"></i>
+        </div>
+        <h3 class="confirm-modal__title" style="text-align: center;">Marcar como Perdido</h3>
+        <p class="confirm-modal__message" style="text-align: center;">
+          ${leadName ? `El lead "${leadName}" se moverá a Archivados.` : 'El lead se moverá a Archivados.'}
+        </p>
+        <div style="margin-top: 1.5rem;">
+          <label class="form-label" for="lost-reason-input">Motivo (opcional)</label>
+          <textarea class="form-textarea" id="lost-reason-input" rows="3"
+                    placeholder="Ej: No respondió, eligió otra propiedad, fuera de presupuesto..."></textarea>
+        </div>
+      </div>
+      <div class="modal__footer" style="justify-content: center;">
+        <button class="btn btn--outline" id="modal-cancel">Cancelar</button>
+        <button class="btn btn--danger" id="modal-confirm">Marcar como Perdido</button>
+      </div>
+    `;
+
+    this.open(content, 'sm');
+
+    document.getElementById('modal-cancel').addEventListener('click', () => this.close());
+    document.getElementById('modal-confirm').addEventListener('click', () => {
+      const reason = document.getElementById('lost-reason-input').value.trim();
+      this.close();
+      if (onConfirm) onConfirm(reason);
+    });
+  },
+
   // Upload Modal
   upload(options = {}) {
     const { title = 'Subir Archivos', accept = '*', multiple = true, onUpload } = options;
@@ -4011,332 +4046,6 @@ const Modals = {
   // =============================================
   // LEAD ACTIVITY MODALS
   // =============================================
-
-  // New Activity Modal
-  newActivity(leadId, preselectedType = null) {
-    const lead = DataStore.getLeadById(leadId);
-    if (!lead) return;
-
-    const activityTypes = DataStore.activityTypes || [
-      { id: 'llamada_entrante', name: 'Llamada Entrante', icon: 'phone-incoming' },
-      { id: 'llamada_saliente', name: 'Llamada Saliente', icon: 'phone-outgoing' },
-      { id: 'whatsapp', name: 'WhatsApp', icon: 'message-circle' },
-      { id: 'email', name: 'Email', icon: 'mail' },
-      { id: 'visita', name: 'Visita', icon: 'home' },
-      { id: 'reunion', name: 'Reunión', icon: 'users' },
-      { id: 'nota', name: 'Nota', icon: 'file-text' },
-      { id: 'oferta', name: 'Oferta', icon: 'tag' },
-      { id: 'seguimiento', name: 'Seguimiento', icon: 'refresh-cw' }
-    ];
-
-    const activityOutcomes = DataStore.activityOutcomes || [
-      { id: 'exitoso', name: 'Exitoso' },
-      { id: 'sin_respuesta', name: 'Sin Respuesta' },
-      { id: 'ocupado', name: 'Ocupado' },
-      { id: 'rechazado', name: 'Rechazado' },
-      { id: 'pendiente', name: 'Pendiente' },
-      { id: 'no_aplica', name: 'No Aplica' }
-    ];
-
-    const today = new Date().toISOString().split('T')[0];
-
-    const content = `
-      <div class="modal__header">
-        <h2 class="modal__title">
-          <i data-lucide="activity"></i>
-          Registrar Actividad
-        </h2>
-        <button class="modal__close" id="modal-close">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-      <div class="modal__body form-modal">
-        <div class="activity-context">
-          <span class="activity-context__label">Lead:</span>
-          <span class="activity-context__value">${lead.name}</span>
-        </div>
-
-        <!-- Activity Type Selector -->
-        <div class="form-group">
-          <label class="form-label">Tipo de Actividad <span class="required">*</span></label>
-          <div class="activity-type-grid" id="activity-type-grid">
-            ${activityTypes.map(t => `
-              <button type="button" class="activity-type-btn ${preselectedType === t.id ? 'active' : ''}" data-type="${t.id}">
-                <i data-lucide="${t.icon}"></i>
-                <span>${t.name}</span>
-              </button>
-            `).join('')}
-          </div>
-          <input type="hidden" id="activity-type" value="${preselectedType || ''}">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Fecha <span class="required">*</span></label>
-            <input type="date" class="form-input" id="activity-date" value="${today}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Resultado</label>
-            <select class="form-select" id="activity-outcome">
-              ${activityOutcomes.map(o => `
-                <option value="${o.id}" ${o.id === 'exitoso' ? 'selected' : ''}>${o.name}</option>
-              `).join('')}
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row" id="duration-row" style="display: none;">
-          <div class="form-group">
-            <label class="form-label">Duración (minutos)</label>
-            <input type="number" class="form-input" id="activity-duration" min="0" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Asunto</label>
-            <input type="text" class="form-input" id="activity-subject" placeholder="Asunto de la comunicación">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Notas</label>
-          <textarea class="form-textarea" id="activity-notes" rows="3" placeholder="Detalles de la actividad..."></textarea>
-        </div>
-
-        <div class="form-section">
-          <div class="form-group form-checkbox">
-            <input type="checkbox" id="activity-followup-required">
-            <label for="activity-followup-required">Requiere seguimiento</label>
-          </div>
-          <div class="form-group" id="followup-date-group" style="display: none;">
-            <label class="form-label">Fecha de seguimiento</label>
-            <input type="date" class="form-input" id="activity-followup-date">
-          </div>
-        </div>
-      </div>
-      <div class="modal__footer">
-        <button class="btn btn--outline" id="modal-cancel">Cancelar</button>
-        <button class="btn btn--primary" id="modal-save">
-          <i data-lucide="plus"></i>
-          Registrar Actividad
-        </button>
-      </div>
-    `;
-
-    this.open(content, 'md');
-
-    // Activity type selection
-    const typeGrid = document.getElementById('activity-type-grid');
-    const typeInput = document.getElementById('activity-type');
-    const durationRow = document.getElementById('duration-row');
-
-    typeGrid?.addEventListener('click', (e) => {
-      const btn = e.target.closest('.activity-type-btn');
-      if (!btn) return;
-
-      // Update active state
-      typeGrid.querySelectorAll('.activity-type-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      typeInput.value = btn.dataset.type;
-
-      // Show duration for calls and meetings
-      const showDuration = ['llamada_entrante', 'llamada_saliente', 'reunion', 'visita'].includes(btn.dataset.type);
-      durationRow.style.display = showDuration ? 'flex' : 'none';
-    });
-
-    // Follow-up checkbox
-    const followupCheckbox = document.getElementById('activity-followup-required');
-    const followupDateGroup = document.getElementById('followup-date-group');
-
-    followupCheckbox?.addEventListener('change', (e) => {
-      followupDateGroup.style.display = e.target.checked ? 'block' : 'none';
-      if (e.target.checked) {
-        // Set default follow-up date to tomorrow
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        document.getElementById('activity-followup-date').value = tomorrow.toISOString().split('T')[0];
-      }
-    });
-
-    // Modal buttons
-    document.getElementById('modal-close')?.addEventListener('click', () => this.close());
-    document.getElementById('modal-cancel')?.addEventListener('click', () => this.close());
-    document.getElementById('modal-save')?.addEventListener('click', async () => {
-      const type = document.getElementById('activity-type')?.value;
-      const date = document.getElementById('activity-date')?.value;
-      const outcome = document.getElementById('activity-outcome')?.value;
-      const duration = document.getElementById('activity-duration')?.value;
-      const subject = document.getElementById('activity-subject')?.value?.trim();
-      const notes = document.getElementById('activity-notes')?.value?.trim();
-      const followUpRequired = document.getElementById('activity-followup-required')?.checked;
-      const followUpDate = document.getElementById('activity-followup-date')?.value;
-
-      if (!type) {
-        Toast.show('error', 'Error', 'Seleccioná un tipo de actividad');
-        return;
-      }
-
-      if (!date) {
-        Toast.show('error', 'Error', 'La fecha es requerida');
-        return;
-      }
-
-      const activityData = {
-        type,
-        date,
-        outcome: outcome || 'no_aplica',
-        duration: duration ? parseInt(duration) : null,
-        subject: subject || null,
-        notes: notes || null,
-        followUpRequired: followUpRequired || false,
-        followUpDate: followUpRequired && followUpDate ? followUpDate : null
-      };
-
-      try {
-        const saveBtn = document.getElementById('modal-save');
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Guardando...';
-
-        await DataStore.addLeadActivityViaAPI(leadId, activityData);
-        Toast.show('success', 'Actividad registrada');
-        this.close();
-
-        // Refresh lead panel
-        if (Panels.isOpen) {
-          setTimeout(() => Panels.lead(leadId), 100);
-        }
-      } catch (error) {
-        Toast.show('error', 'Error', error.message || 'No se pudo registrar la actividad');
-        const saveBtn = document.getElementById('modal-save');
-        if (saveBtn) {
-          saveBtn.disabled = false;
-          saveBtn.innerHTML = '<i data-lucide="plus"></i> Registrar Actividad';
-          lucide.createIcons();
-        }
-      }
-    });
-  },
-
-  // Quick Activity Modal (simplified version for quick actions)
-  quickActivity(leadId, activityType) {
-    const lead = DataStore.getLeadById(leadId);
-    if (!lead) return;
-
-    const typeLabels = {
-      'llamada_entrante': 'Llamada Entrante',
-      'llamada_saliente': 'Llamada Saliente',
-      'whatsapp': 'WhatsApp',
-      'email': 'Email',
-      'visita': 'Visita',
-      'reunion': 'Reunión',
-      'nota': 'Nota'
-    };
-
-    const typeIcons = {
-      'llamada_entrante': 'phone-incoming',
-      'llamada_saliente': 'phone-outgoing',
-      'whatsapp': 'message-circle',
-      'email': 'mail',
-      'visita': 'home',
-      'reunion': 'users',
-      'nota': 'file-text'
-    };
-
-    const showDuration = ['llamada_entrante', 'llamada_saliente', 'reunion', 'visita'].includes(activityType);
-
-    const activityOutcomes = DataStore.activityOutcomes || [
-      { id: 'exitoso', name: 'Exitoso' },
-      { id: 'sin_respuesta', name: 'Sin Respuesta' },
-      { id: 'ocupado', name: 'Ocupado' },
-      { id: 'rechazado', name: 'Rechazado' },
-      { id: 'pendiente', name: 'Pendiente' },
-      { id: 'no_aplica', name: 'No Aplica' }
-    ];
-
-    const today = new Date().toISOString().split('T')[0];
-
-    const content = `
-      <div class="modal__header">
-        <h2 class="modal__title">
-          <i data-lucide="${typeIcons[activityType] || 'activity'}"></i>
-          ${typeLabels[activityType] || 'Actividad'}
-        </h2>
-        <button class="modal__close" id="modal-close">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-      <div class="modal__body form-modal">
-        <div class="activity-context">
-          <span class="activity-context__label">Lead:</span>
-          <span class="activity-context__value">${lead.name}</span>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Fecha</label>
-            <input type="date" class="form-input" id="quick-activity-date" value="${today}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Resultado</label>
-            <select class="form-select" id="quick-activity-outcome">
-              ${activityOutcomes.map(o => `
-                <option value="${o.id}" ${o.id === 'exitoso' ? 'selected' : ''}>${o.name}</option>
-              `).join('')}
-            </select>
-          </div>
-        </div>
-
-        ${showDuration ? `
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Duración (minutos)</label>
-            <input type="number" class="form-input" id="quick-activity-duration" min="0" placeholder="0">
-          </div>
-          <div class="form-group"></div>
-        </div>
-        ` : ''}
-
-        <div class="form-group">
-          <label class="form-label">Notas</label>
-          <textarea class="form-textarea" id="quick-activity-notes" rows="2" placeholder="¿Qué se habló? ¿Qué resultado hubo?"></textarea>
-        </div>
-      </div>
-      <div class="modal__footer">
-        <button class="btn btn--outline" id="modal-cancel">Cancelar</button>
-        <button class="btn btn--primary" id="modal-save">Guardar</button>
-      </div>
-    `;
-
-    this.open(content, 'sm');
-
-    document.getElementById('modal-close')?.addEventListener('click', () => this.close());
-    document.getElementById('modal-cancel')?.addEventListener('click', () => this.close());
-    document.getElementById('modal-save')?.addEventListener('click', async () => {
-      const date = document.getElementById('quick-activity-date')?.value;
-      const outcome = document.getElementById('quick-activity-outcome')?.value;
-      const duration = document.getElementById('quick-activity-duration')?.value;
-      const notes = document.getElementById('quick-activity-notes')?.value?.trim();
-
-      const activityData = {
-        type: activityType,
-        date: date || today,
-        outcome: outcome || 'no_aplica',
-        duration: duration ? parseInt(duration) : null,
-        notes: notes || null
-      };
-
-      try {
-        await DataStore.addLeadActivityViaAPI(leadId, activityData);
-        Toast.show('success', 'Actividad registrada');
-        this.close();
-
-        // Refresh lead panel
-        if (Panels.isOpen) {
-          setTimeout(() => Panels.lead(leadId), 100);
-        }
-      } catch (error) {
-        Toast.show('error', 'Error', error.message || 'No se pudo registrar');
-      }
-    });
-  },
 
   // Complete follow-up and optionally schedule a new one
   completeFollowUp(leadId) {
