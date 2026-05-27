@@ -175,9 +175,10 @@ router.get('/stats',
  * Get pending follow-ups (for notifications)
  * Returns two kinds of notifications:
  *  - 'followup': activities where followUpRequired=true and followUpDate <= today
- *  - 'stale':    open leads with no activity in the last 7 days (pending response
- *                for a week). These are recomputed on each request, so they keep
- *                reappearing week after week until the lead is contacted or closed.
+ *  - 'stale':    active leads (not CERRADO/PERDIDO) with no note added/edited and no
+ *                stage change in the last 7 days (tracked via lead.lastContactedAt).
+ *                Recomputed on each request, so they keep reappearing week after week
+ *                until the lead is contacted, closed or marked lost.
  */
 router.get('/follow-ups/pending',
   authenticate,
@@ -203,18 +204,20 @@ router.get('/follow-ups/pending',
       };
     }
 
-    // A lead is "stale" when it is still open and nobody has logged any activity
-    // (call, whatsapp, email, note, etc.) in the last 7 days, and it was created
-    // more than a week ago (so brand-new leads don't fire immediately).
+    // A lead is "stale" when it is still active (not closed nor lost) and has not been
+    // contacted in the last 7 days. "Contacted" means a note was added/edited or the
+    // stage changed, both tracked via lead.lastContactedAt (see PUT /:id). Legacy leads
+    // created before that column existed have lastContactedAt = null, so we fall back to
+    // their createdAt. New leads keep lastContactedAt = createdAt and stay quiet a week.
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
 
     const staleWhere = {
-      stage: { not: 'CERRADO' },
-      createdAt: { lte: weekAgo },
-      activities: {
-        none: { date: { gte: weekAgo } }
-      }
+      stage: { notIn: ['CERRADO', 'PERDIDO'] },
+      OR: [
+        { lastContactedAt: { lte: weekAgo } },
+        { lastContactedAt: null, createdAt: { lte: weekAgo } }
+      ]
     };
     if (!canViewAll) {
       staleWhere.assignedToId = req.user.id;
@@ -248,14 +251,10 @@ router.get('/follow-ups/pending',
           name: true,
           phone: true,
           createdAt: true,
-          assignedTo: { select: { id: true, name: true } },
-          activities: {
-            orderBy: { date: 'desc' },
-            take: 1,
-            select: { date: true }
-          }
+          lastContactedAt: true,
+          assignedTo: { select: { id: true, name: true } }
         },
-        orderBy: { updatedAt: 'asc' },
+        orderBy: { lastContactedAt: 'asc' },
         take: 50
       })
     ]);
@@ -284,7 +283,9 @@ router.get('/follow-ups/pending',
     });
 
     const staleNotifications = staleLeads.map(lead => {
-      const lastContact = lead.activities[0]?.date || lead.createdAt;
+      // "Último contacto" = last note added/edited or stage change (lastContactedAt),
+      // falling back to createdAt for legacy leads that predate the column.
+      const lastContact = lead.lastContactedAt || lead.createdAt;
       const daysSince = Math.floor((now - new Date(lastContact)) / (1000 * 60 * 60 * 24));
 
       return {
@@ -436,7 +437,8 @@ router.post('/',
         notes,
         propertyId,
         assignedToId: finalAssignedToId,
-        createdById: req.user.id
+        createdById: req.user.id,
+        lastContactedAt: new Date()
       },
       include: {
         assignedTo: {
@@ -547,6 +549,16 @@ router.put('/:id',
     if (lostReason !== undefined) updateData.lostReason = lostReason;
     if (closedDate !== undefined) updateData.closedDate = new Date(closedDate);
     if (closedAmount !== undefined) updateData.closedAmount = parseFloat(closedAmount);
+
+    // Only a real note edit or a real stage change counts as "contacting" the lead.
+    // Compared against the stored values so that edits to other fields (or payloads
+    // that resend unchanged notes/stage, e.g. the kanban drag or the edit modal) do
+    // not reset the stale-follow-up clock.
+    const noteChanged = notes !== undefined && notes !== existingLead.notes;
+    const stageChanged = stage !== undefined && stage !== existingLead.stage;
+    if (noteChanged || stageChanged) {
+      updateData.lastContactedAt = new Date();
+    }
 
     const lead = await prisma.lead.update({
       where: { id: leadId },

@@ -1,6 +1,6 @@
 # DOMUM - Codebase Analysis
 
-**Generated:** 2026-03-25 (Updated)
+**Generated:** 2026-05-27 (Updated)
 
 ## Executive Summary
 
@@ -29,12 +29,14 @@ DOMUM/
 ├── backend/                   # Node.js/Express API server
 │   ├── node_modules/          # Dependencies
 │   ├── prisma/
+│   │   ├── migrations/        # Raw SQL migrations (e.g. simplify_lead_stages.sql)
 │   │   ├── schema.prisma      # Database schema definition
 │   │   └── seed.js            # Database seeder
 │   ├── src/
 │   │   ├── config/
 │   │   │   ├── database.js    # Prisma client instance
-│   │   │   └── permissions.js # Role-based access control
+│   │   │   ├── permissions.js # Role-based access control
+│   │   │   └── supabase.js    # Supabase Storage client + bucket names
 │   │   ├── middleware/
 │   │   │   ├── auth.middleware.js           # JWT authentication
 │   │   │   ├── authorization.middleware.js  # RBAC authorization
@@ -47,12 +49,12 @@ DOMUM/
 │   │   │   ├── document.routes.js   # Document management
 │   │   │   ├── event.routes.js      # Calendar events
 │   │   │   ├── lead.routes.js       # CRM leads
-│   │   │   ├── pdf.routes.js        # PDF generation (Puppeteer)
 │   │   │   ├── property.routes.js   # Properties CRUD
 │   │   │   ├── rental.routes.js     # Rental contracts
 │   │   │   ├── settings.routes.js   # App branding settings
+│   │   │   ├── task.routes.js       # Task management
 │   │   │   ├── transaction.routes.js # Financial transactions
-│   │   │   ├── upload.routes.js     # File upload handling
+│   │   │   ├── upload.routes.js     # File upload handling (Supabase)
 │   │   │   └── user.routes.js       # User management
 │   │   ├── services/
 │   │   │   └── auth.service.js      # Authentication logic
@@ -112,9 +114,9 @@ DOMUM/
 | **Validation** | express-validator | ^7.0.1 | Request validation |
 | **Security** | Helmet | ^7.1.0 | HTTP security headers |
 | **Rate Limiting** | express-rate-limit | ^7.2.0 | API rate limiting |
-| **PDF Generation** | Puppeteer | ^24.39.1 | Server-side PDF rendering |
-| **Image Processing** | Sharp | ^0.34.5 | Image optimization |
+| **Image Processing** | Sharp | ^0.34.5 | Image optimization + HEIC→JPEG conversion |
 | **File Uploads** | Multer | ^2.1.1 | Multipart form handling |
+| **Cloud Storage** | @supabase/supabase-js | ^2.101.1 | File/image storage (Supabase Storage) |
 | **Logging** | Morgan | ^1.10.0 | HTTP request logging |
 | **Frontend** | Vanilla JavaScript | ES6+ | Single page application |
 | **Icons** | Lucide Icons | latest | Icon library |
@@ -265,8 +267,8 @@ Token Refresh (on 401):
 | `jsonwebtoken` | JWT tokens |
 | `morgan` | Request logging |
 | `multer` | File uploads |
-| `puppeteer` | PDF generation |
-| `sharp` | Image processing |
+| `sharp` | Image processing (incl. HEIC→JPEG) |
+| `@supabase/supabase-js` | Supabase Storage client |
 
 ### Development Dependencies (Backend)
 | Package | Purpose |
@@ -300,14 +302,16 @@ Token Refresh (on 401):
 | `/api/documents` | CRUD + stats | Yes |
 | `/api/tasks` | CRUD + my-tasks, stats, complete | Yes |
 | `/api/upload` | POST property images, temp images; DELETE image | Yes |
-| `/api/pdf` | POST generate, document/:id | Yes |
 | `/api/dashboard` | GET stats, quick-stats | Yes |
 | `/api/settings` | GET (public), PUT (SUPERADMIN) | Partial |
 | `/api/health` | GET | No |
 
 ### External Services
-- **None currently** - Self-contained application
+- **Supabase Storage** - Cloud file/image storage. Buckets: `properties`, `documents`. Client in `backend/src/config/supabase.js` authenticates with the **service role key**.
+- **PostgreSQL** - Primary database (self-hosted via Docker or cloud)
 - **Future potential:** Email notifications, WhatsApp integration, property portals
+
+> **PDF generation is client-side only.** There is no `/api/pdf` route or Puppeteer dependency; PDFs are produced in the browser via `src/js/pdf-generator.js` using html2pdf.js.
 
 ---
 
@@ -360,6 +364,9 @@ python -m http.server 5500 --directory src
 | `PORT` | Server port | No | `3001` |
 | `NODE_ENV` | Environment mode | No | `development` |
 | `FRONTEND_URL` | CORS origin | No | `http://localhost:5500` |
+| `SUPABASE_URL` | Supabase project URL | For uploads | - |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side storage) | For uploads | - |
+| `VERCEL` | Vercel serverless flag (`1` disables `app.listen`) | Auto | - |
 
 ---
 
@@ -407,6 +414,14 @@ Currently no automated tests are configured. The project uses:
 - **TaskStatus:** PENDIENTE, EN_PROGRESO, COMPLETADA, CANCELADA
 - **ActivityType:** LLAMADA_ENTRANTE, LLAMADA_SALIENTE, WHATSAPP, EMAIL, VISITA, REUNION, NOTA, OFERTA, SEGUIMIENTO
 - **ActivityOutcome:** EXITOSO, SIN_RESPUESTA, OCUPADO, RECHAZADO, PENDIENTE, NO_APLICA
+- **TransactionType:** (income/expense classification — see schema)
+- **TransactionCategory:** financial categories for the Caja module
+- **EventStatus:** event lifecycle states
+- **RentalStatus:** rental contract lifecycle states
+- **AdjustmentFrequency:** rent adjustment cadence (e.g. trimestral/anual)
+- **BookingStatus:** temporary booking states
+
+> The schema (`backend/prisma/schema.prisma`, ~519 lines) defines 13 models — including `RefreshToken` (token rotation) — and 18 enums.
 
 ---
 

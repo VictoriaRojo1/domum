@@ -251,6 +251,9 @@ model Lead {
   lostReason     String?         @map("lost_reason")
   closedDate     DateTime?       @map("closed_date")
   closedAmount   Decimal?        @map("closed_amount") @db.Decimal(15, 2)
+  // Last time the lead was "contacted": set on creation and refreshed only when a
+  // note is added/edited or the stage changes. Drives the stale follow-up alerts.
+  lastContactedAt DateTime?      @map("last_contacted_at")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
 
